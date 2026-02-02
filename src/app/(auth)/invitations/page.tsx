@@ -4,156 +4,113 @@ import { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
-interface Invitation {
+interface MemberRequest {
   id: string;
   email: string;
-  token: string;
-  status: 'pending' | 'approved' | 'rejected' | 'used';
-  max_bookings: number;
-  bookings_count: number;
-  expires_at: string | null;
-  note: string | null;
+  name: string;
+  status: 'pending' | 'approved' | 'rejected';
+  rejection_reason: string | null;
   created_at: string;
-  invited_by_member?: { name: string; email: string } | null;
-  approved_by_member?: { name: string; email: string } | null;
+  reviewed_at: string | null;
+  reviewer?: { name: string; email: string } | null;
 }
 
-type TabType = 'all' | 'pending' | 'approved' | 'used';
+type TabType = 'all' | 'pending' | 'approved' | 'rejected';
 
-export default function InvitationsPage() {
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
+export default function MemberRequestsPage() {
+  const [requests, setRequests] = useState<MemberRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    email: '',
-    maxBookings: '1',
-    note: '',
-    sendEmail: false,
-  });
-  const [isCreating, setIsCreating] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>('pending');
   const [error, setError] = useState<string | null>(null);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const fetchInvitations = useCallback(async () => {
+  const fetchRequests = useCallback(async () => {
     try {
       setIsLoading(true);
       const statusParam = activeTab !== 'all' ? `?status=${activeTab}` : '';
-      const response = await fetch(`/api/invitations${statusParam}`);
+      const response = await fetch(`/api/member-requests${statusParam}`);
       const data = await response.json();
 
       if (response.ok) {
-        setInvitations(data.invitations || []);
+        setRequests(data.requests || []);
       } else {
         setError(data.error);
       }
     } catch {
-      setError('招待一覧の取得に失敗しました');
+      setError('申請一覧の取得に失敗しました');
     } finally {
       setIsLoading(false);
     }
   }, [activeTab]);
 
   useEffect(() => {
-    fetchInvitations();
-  }, [fetchInvitations]);
-
-  const handleCreateInvitation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsCreating(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/invitations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: createForm.email,
-          maxBookings: parseInt(createForm.maxBookings, 10),
-          note: createForm.note || undefined,
-          autoApprove: true,
-          sendEmail: createForm.sendEmail,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setShowCreateModal(false);
-        setCreateForm({ email: '', maxBookings: '1', note: '', sendEmail: false });
-        fetchInvitations();
-        // Copy the booking URL to clipboard
-        if (data.bookingUrl) {
-          navigator.clipboard.writeText(data.bookingUrl);
-          const emailMessage = data.emailSent ? '\n招待メールも送信されました。' : '';
-          alert(`招待リンクがクリップボードにコピーされました:\n${data.bookingUrl}${emailMessage}`);
-        }
-      } else {
-        setError(data.error);
-      }
-    } catch {
-      setError('招待の作成に失敗しました');
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  const handleCopyLink = async (invitation: Invitation) => {
-    const baseUrl = window.location.origin;
-    const bookingUrl = `${baseUrl}/book?invitation=${invitation.token}`;
-    await navigator.clipboard.writeText(bookingUrl);
-    setCopiedId(invitation.id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+    fetchRequests();
+  }, [fetchRequests]);
 
   const handleApprove = async (id: string) => {
+    if (!confirm('この登録申請を承認しますか？')) return;
+
+    setProcessingId(id);
     try {
-      const response = await fetch(`/api/invitations/${id}`, {
+      const response = await fetch(`/api/member-requests/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'approve' }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        fetchInvitations();
+        fetchRequests();
+        alert('メンバーを承認しました');
+      } else {
+        setError(data.error);
       }
     } catch {
       setError('承認に失敗しました');
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (id: string) => {
-    if (!confirm('この招待を拒否しますか？')) return;
+    const reason = prompt('拒否理由を入力してください（任意）:');
+    if (reason === null) return; // User cancelled
 
+    setProcessingId(id);
     try {
-      const response = await fetch(`/api/invitations/${id}`, {
+      const response = await fetch(`/api/member-requests/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'reject' }),
+        body: JSON.stringify({ action: 'reject', rejectionReason: reason || undefined }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        fetchInvitations();
+        fetchRequests();
+      } else {
+        setError(data.error);
       }
     } catch {
       setError('拒否に失敗しました');
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('この招待を削除しますか？')) return;
+    if (!confirm('この申請を削除しますか？')) return;
 
     try {
-      const response = await fetch(`/api/invitations/${id}`, {
+      const response = await fetch(`/api/member-requests/${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        fetchInvitations();
+        fetchRequests();
       }
     } catch {
       setError('削除に失敗しました');
@@ -163,9 +120,8 @@ export default function InvitationsPage() {
   const getStatusBadge = (status: string) => {
     const badges: Record<string, { label: string; className: string }> = {
       pending: { label: '承認待ち', className: 'bg-yellow-100 text-yellow-800' },
-      approved: { label: '有効', className: 'bg-green-100 text-green-800' },
+      approved: { label: '承認済み', className: 'bg-green-100 text-green-800' },
       rejected: { label: '拒否', className: 'bg-red-100 text-red-800' },
-      used: { label: '使用済み', className: 'bg-slate-100 text-slate-600' },
     };
     const badge = badges[status] || { label: status, className: 'bg-slate-100 text-slate-600' };
     return (
@@ -176,31 +132,28 @@ export default function InvitationsPage() {
   };
 
   const tabs: { key: TabType; label: string }[] = [
-    { key: 'all', label: 'すべて' },
     { key: 'pending', label: '承認待ち' },
-    { key: 'approved', label: '有効' },
-    { key: 'used', label: '使用済み' },
+    { key: 'approved', label: '承認済み' },
+    { key: 'rejected', label: '拒否' },
+    { key: 'all', label: 'すべて' },
   ];
+
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
 
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">招待管理</h1>
-          <p className="text-slate-500 mt-1">予約ページへの招待リンクを管理します</p>
-        </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          招待を作成
-        </Button>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-slate-900">登録申請管理</h1>
+        <p className="text-slate-500 mt-1">新規メンバーの登録申請を承認・拒否します</p>
       </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600">
           {error}
+          <button onClick={() => setError(null)} className="ml-2 underline">
+            閉じる
+          </button>
         </div>
       )}
 
@@ -211,40 +164,42 @@ export default function InvitationsPage() {
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+              'px-4 py-2 rounded-lg text-sm font-medium transition-colors relative',
               activeTab === tab.key
                 ? 'bg-brand-500 text-white'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             )}
           >
             {tab.label}
+            {tab.key === 'pending' && pendingCount > 0 && activeTab !== 'pending' && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {pendingCount}
+              </span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* Invitations List */}
+      {/* Requests List */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-slate-500">読み込み中...</div>
-        ) : invitations.length === 0 ? (
+        ) : requests.length === 0 ? (
           <div className="p-8 text-center text-slate-500">
-            招待がありません
+            {activeTab === 'pending' ? '承認待ちの申請はありません' : '申請がありません'}
           </div>
         ) : (
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  メールアドレス
+                  申請者
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   ステータス
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  使用状況
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  作成日
+                  申請日時
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   操作
@@ -252,56 +207,51 @@ export default function InvitationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {invitations.map((invitation) => (
-                <tr key={invitation.id} className="hover:bg-slate-50">
+              {requests.map((request) => (
+                <tr key={request.id} className="hover:bg-slate-50">
                   <td className="px-6 py-4">
-                    <div className="font-medium text-slate-900">{invitation.email}</div>
-                    {invitation.note && (
-                      <div className="text-sm text-slate-500 mt-1">{invitation.note}</div>
+                    <div className="font-medium text-slate-900">{request.name}</div>
+                    <div className="text-sm text-slate-500">{request.email}</div>
+                  </td>
+                  <td className="px-6 py-4">
+                    {getStatusBadge(request.status)}
+                    {request.rejection_reason && (
+                      <div className="text-xs text-slate-500 mt-1">
+                        理由: {request.rejection_reason}
+                      </div>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    {getStatusBadge(invitation.status)}
-                  </td>
                   <td className="px-6 py-4 text-sm text-slate-600">
-                    {invitation.bookings_count} / {invitation.max_bookings} 回
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
-                    {format(new Date(invitation.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+                    {format(new Date(request.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+                    {request.reviewed_at && (
+                      <div className="text-xs text-slate-400 mt-1">
+                        処理: {format(new Date(request.reviewed_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      {invitation.status === 'approved' && (
-                        <button
-                          onClick={() => handleCopyLink(invitation)}
-                          className={cn(
-                            'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
-                            copiedId === invitation.id
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
-                          )}
-                        >
-                          {copiedId === invitation.id ? 'コピー済み' : 'リンクをコピー'}
-                        </button>
-                      )}
-                      {invitation.status === 'pending' && (
+                      {request.status === 'pending' && (
                         <>
-                          <button
-                            onClick={() => handleApprove(invitation.id)}
-                            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(request.id)}
+                            disabled={processingId === request.id}
+                            className="bg-green-500 hover:bg-green-600"
                           >
-                            承認
-                          </button>
+                            {processingId === request.id ? '処理中...' : '承認'}
+                          </Button>
                           <button
-                            onClick={() => handleReject(invitation.id)}
-                            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                            onClick={() => handleReject(request.id)}
+                            disabled={processingId === request.id}
+                            className="px-3 py-1.5 text-sm font-medium rounded-lg bg-red-100 text-red-700 hover:bg-red-200 transition-colors disabled:opacity-50"
                           >
                             拒否
                           </button>
                         </>
                       )}
                       <button
-                        onClick={() => handleDelete(invitation.id)}
+                        onClick={() => handleDelete(request.id)}
                         className="px-3 py-1.5 text-sm font-medium rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors"
                       >
                         削除
@@ -314,80 +264,6 @@ export default function InvitationsPage() {
           </table>
         )}
       </div>
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md mx-4">
-            <h2 className="text-xl font-bold text-slate-900 mb-4">新しい招待を作成</h2>
-            <form onSubmit={handleCreateInvitation} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  メールアドレス <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  type="email"
-                  value={createForm.email}
-                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                  placeholder="example@example.com"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  最大予約回数
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={createForm.maxBookings}
-                  onChange={(e) => setCreateForm({ ...createForm, maxBookings: e.target.value })}
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  この招待リンクで予約できる最大回数です
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
-                  メモ（管理用）
-                </label>
-                <Textarea
-                  value={createForm.note}
-                  onChange={(e) => setCreateForm({ ...createForm, note: e.target.value })}
-                  placeholder="例: 〇〇株式会社の田中様"
-                  rows={2}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="sendEmail"
-                  checked={createForm.sendEmail}
-                  onChange={(e) => setCreateForm({ ...createForm, sendEmail: e.target.checked })}
-                  className="w-4 h-4 text-brand-500 border-slate-300 rounded focus:ring-brand-500"
-                />
-                <label htmlFor="sendEmail" className="text-sm text-slate-700">
-                  招待メールを送信する
-                </label>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1"
-                >
-                  キャンセル
-                </Button>
-                <Button type="submit" disabled={isCreating} className="flex-1">
-                  {isCreating ? '作成中...' : '作成してリンクをコピー'}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

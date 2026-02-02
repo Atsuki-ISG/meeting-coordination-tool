@@ -39,25 +39,20 @@ export interface Team {
   name: string;
   invite_code: string;
   created_by: string;
-  require_invitation: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface BookingInvitation {
+export interface MemberRequest {
   id: string;
   email: string;
-  token: string;
-  invited_by: string | null;
-  team_id: string;
-  status: 'pending' | 'approved' | 'rejected' | 'used';
-  approved_by: string | null;
-  approved_at: string | null;
-  used_at: string | null;
-  expires_at: string | null;
-  max_bookings: number;
-  bookings_count: number;
-  note: string | null;
+  name: string;
+  google_id: string;
+  google_refresh_token: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
   created_at: string;
   updated_at: string;
 }

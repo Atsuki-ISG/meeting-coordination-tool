@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { TimeSlotPicker } from '@/components/booking/time-slot-picker';
@@ -14,20 +14,11 @@ interface EventTypeInfo {
   durationMinutes: number;
 }
 
-interface InvitationInfo {
-  id: string;
-  email: string;
-  remainingBookings: number;
-  expiresAt: string | null;
-}
-
 type BookingStep = 'select-time' | 'fill-form' | 'confirmed';
 
 export default function BookingPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
   const slug = params.slug as string;
-  const invitationToken = searchParams.get('invitation');
 
   const [step, setStep] = useState<BookingStep>('select-time');
   const [slots, setSlots] = useState<TimeSlot[]>([]);
@@ -37,9 +28,6 @@ export default function BookingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [invitationError, setInvitationError] = useState<string | null>(null);
-  const [invitation, setInvitation] = useState<InvitationInfo | null>(null);
-  const [requiresInvitation, setRequiresInvitation] = useState(false);
   const [bookingResult, setBookingResult] = useState<{
     id: string;
     cancelUrl: string;
@@ -50,7 +38,6 @@ export default function BookingPage() {
     try {
       setIsLoading(true);
       setError(null);
-      setInvitationError(null);
 
       // First, get event type ID from slug
       const eventTypeRes = await fetch(`/api/event-types?slug=${slug}`);
@@ -59,32 +46,6 @@ export default function BookingPage() {
       }
       const eventTypeData = await eventTypeRes.json();
       setEventTypeId(eventTypeData.id);
-      setRequiresInvitation(eventTypeData.requiresInvitation || false);
-
-      // If invitation is required, verify the token
-      if (eventTypeData.requiresInvitation) {
-        if (!invitationToken) {
-          setInvitationError('この予約には招待が必要です。招待リンクからアクセスしてください。');
-          setIsLoading(false);
-          return;
-        }
-
-        const inviteRes = await fetch('/api/invitations/verify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: invitationToken }),
-        });
-
-        const inviteData = await inviteRes.json();
-
-        if (!inviteData.valid) {
-          setInvitationError(inviteData.error || '招待トークンが無効です');
-          setIsLoading(false);
-          return;
-        }
-
-        setInvitation(inviteData.invitation);
-      }
 
       // Then fetch availability
       const availRes = await fetch(
@@ -107,7 +68,7 @@ export default function BookingPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [slug, invitationToken]);
+  }, [slug]);
 
   useEffect(() => {
     fetchAvailability();
@@ -139,7 +100,6 @@ export default function BookingPage() {
           name: data.name,
           email: data.email,
           note: data.note,
-          invitationToken: invitationToken || undefined,
         }),
       });
 
@@ -160,29 +120,6 @@ export default function BookingPage() {
       setIsSubmitting(false);
     }
   };
-
-  // Show invitation error
-  if (invitationError) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 p-8">
-          <div className="text-center">
-            <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m0 0v2m0-2h2m-2 0H10m-4.26 1.2A8.974 8.974 0 013 12c0-4.97 4.03-9 9-9s9 4.03 9 9a8.974 8.974 0 01-2.74 6.2" />
-              </svg>
-            </div>
-            <h2 className="text-xl font-bold text-slate-900">招待が必要です</h2>
-            <p className="mt-3 text-slate-500">{invitationError}</p>
-            <p className="mt-4 text-sm text-slate-400">
-              この予約ページは招待制となっております。<br />
-              招待リンクをお持ちでない場合は、担当者にお問い合わせください。
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   if (error && step === 'select-time') {
     return (

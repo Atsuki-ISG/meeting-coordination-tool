@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   if (slug || id) {
     const query = supabase
       .from('event_types')
-      .select('*, team:teams(id, name, require_invitation)')
+      .select('*')
       .eq('is_active', true);
 
     if (slug) {
@@ -32,12 +32,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Include requiresInvitation flag
-    const team = data.team as { id: string; name: string; require_invitation: boolean } | null;
-    return NextResponse.json({
-      ...data,
-      requiresInvitation: team?.require_invitation ?? false,
-    });
+    return NextResponse.json(data);
   }
 
   // Get all event types (requires authentication)
