@@ -43,6 +43,20 @@ export interface Team {
   updated_at: string;
 }
 
+export interface MemberRequest {
+  id: string;
+  email: string;
+  name: string;
+  google_id: string;
+  google_refresh_token: string | null;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface EventType {
   id: string;
   slug: string;

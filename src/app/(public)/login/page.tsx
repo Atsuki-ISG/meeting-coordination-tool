@@ -8,24 +8,85 @@ import { Button } from '@/components/ui/button';
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const status = searchParams.get('status');
 
   const handleGoogleLogin = () => {
     window.location.href = '/api/auth/google';
   };
 
+  // Show pending approval message
+  if (status === 'pending') {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <CardTitle className="text-2xl">承認待ち</CardTitle>
+          <CardDescription>
+            登録申請を受け付けました
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+            <p className="text-amber-800 text-sm">
+              あなたの登録申請は管理者の承認待ちです。<br />
+              承認されるとログインできるようになります。
+            </p>
+          </div>
+          <p className="text-center text-xs text-gray-500">
+            承認までしばらくお待ちください。
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Show rejected message
+  if (status === 'rejected') {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <CardTitle className="text-2xl">登録が拒否されました</CardTitle>
+          <CardDescription>
+            申し訳ありませんが、登録は承認されませんでした
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+            <p className="text-red-800 text-sm">
+              管理者により登録が拒否されました。<br />
+              ご不明な点がある場合は管理者にお問い合わせください。
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Meeting Scheduler</CardTitle>
+        <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/20">
+          M
+        </div>
+        <CardTitle className="text-2xl">MeetFlow</CardTitle>
         <CardDescription>
-          Sign in to manage your scheduling and calendar
+          Googleアカウントでログインしてください
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-            {error === 'missing_code' && 'Authentication failed. Please try again.'}
-            {error === 'auth_failed' && 'Authentication failed. Please try again.'}
+          <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-sm text-red-600">
+            {error === 'missing_code' && '認証に失敗しました。もう一度お試しください。'}
+            {error === 'auth_failed' && '認証に失敗しました。もう一度お試しください。'}
             {error !== 'missing_code' && error !== 'auth_failed' && error}
           </div>
         )}
@@ -55,11 +116,18 @@ function LoginContent() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          Sign in with Google
+          Googleでログイン
         </Button>
 
+        <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
+          <p className="text-blue-800 text-sm">
+            <strong>承認制です</strong><br />
+            初めてログインする場合は、管理者の承認が必要です。
+          </p>
+        </div>
+
         <p className="text-center text-xs text-gray-500">
-          By signing in, you agree to connect your Google Calendar for scheduling purposes.
+          ログインすると、Googleカレンダーとの連携に同意したものとみなされます。
         </p>
       </CardContent>
     </Card>
@@ -72,7 +140,7 @@ export default function LoginPage() {
       <Suspense fallback={
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
-            <p className="text-gray-500">Loading...</p>
+            <p className="text-gray-500">読み込み中...</p>
           </CardContent>
         </Card>
       }>
