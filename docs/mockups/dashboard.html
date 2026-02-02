@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - MeetFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#00C198',
+              600: '#00A583',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.1); }
+    .btn-appear { opacity: 0; transition: all 0.3s; }
+    .group:hover .btn-appear { opacity: 1; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen antialiased">
+
+  <div class="flex">
+    <!-- Sidebar -->
+    <aside class="w-72 bg-slate-50/50 backdrop-blur-xl border-r border-slate-200/60 fixed h-full hidden md:flex flex-col">
+
+      <!-- Logo -->
+      <div class="p-8">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-brand-500/20">
+            M
+          </div>
+          <div>
+            <span class="font-bold text-xl tracking-tight text-slate-900 block leading-none">MeetFlow</span>
+            <span class="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase mt-1 block">Workspace</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-2 space-y-1 mt-4">
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-900 bg-white shadow-sm font-semibold">
+          <svg class="w-5 h-5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+          </svg>
+          <span class="text-sm">ダッシュボード</span>
+        </a>
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all group">
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+          </svg>
+          <span class="text-sm">予約メニュー</span>
+        </a>
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all group">
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          <span class="text-sm">予約一覧</span>
+        </a>
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all group">
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <span class="text-sm">メンバー</span>
+        </a>
+
+        <div class="my-8 mx-6 border-t border-slate-200"></div>
+
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all group">
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          <span class="text-sm">設定</span>
+        </a>
+        <a href="#" class="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-all group">
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          <span class="text-sm">ログアウト</span>
+        </a>
+      </nav>
+
+      <!-- User Profile -->
+      <div class="p-6">
+        <div class="flex items-center gap-4 p-4 rounded-2xl bg-white shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer group">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-semibold group-hover:scale-105 transition-transform">
+            A
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-slate-900 truncate">Aki</p>
+            <p class="text-xs text-slate-400 truncate">Administrator</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 md:ml-72 p-10">
+
+      <!-- Header -->
+      <header class="sticky top-0 -mx-10 px-10 py-6 bg-slate-50/80 backdrop-blur-md z-20 flex justify-between items-end mb-8">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 tracking-tight mb-1">ダッシュボード</h1>
+          <p class="text-slate-500 font-medium">2026年1月30日（木）</p>
+        </div>
+        <div class="flex items-center gap-4">
+          <button class="flex items-center gap-2 px-6 py-3.5 rounded-full text-white font-bold text-sm shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95" style="background: linear-gradient(135deg, #00C198, #00a080)">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>新規作成</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Stats Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+        <!-- Event Types Count -->
+        <div class="relative group p-8 rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden card-hover">
+          <div class="relative z-10">
+            <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <div class="flex items-baseline gap-2 mb-1">
+              <span class="text-4xl font-bold text-slate-900 tracking-tighter">5</span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">予約メニュー</p>
+          </div>
+        </div>
+
+        <!-- Upcoming Bookings Count -->
+        <div class="relative group p-8 rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden card-hover">
+          <div class="relative z-10">
+            <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+              </svg>
+            </div>
+            <div class="flex items-baseline gap-2 mb-1">
+              <span class="text-4xl font-bold text-slate-900 tracking-tighter">8</span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">今後の予約</p>
+          </div>
+        </div>
+
+        <!-- Confirmed Count -->
+        <div class="relative group p-8 rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden card-hover">
+          <div class="relative z-10">
+            <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
+              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div class="flex items-baseline gap-2 mb-1">
+              <span class="text-4xl font-bold text-slate-900 tracking-tighter">8</span>
+            </div>
+            <p class="text-sm font-medium text-slate-500">確定済み</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two Column Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <!-- Event Types List -->
+        <div class="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100">
+          <div class="p-8 border-b border-slate-100">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-lg text-slate-900">予約メニュー</h3>
+              <a href="#" class="text-sm text-brand-500 font-semibold hover:text-brand-600 transition">すべて表示 →</a>
+            </div>
+          </div>
+          <div class="divide-y divide-slate-100">
+
+            <!-- Event Type Item 1 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition">
+              <div class="flex items-center gap-4">
+                <div class="w-2 h-2 rounded-full bg-brand-500"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">初回相談</p>
+                  <p class="text-sm text-slate-500">30分</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    コピー
+                  </button>
+                  <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Event Type Item 2 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition">
+              <div class="flex items-center gap-4">
+                <div class="w-2 h-2 rounded-full bg-brand-500"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">定例ミーティング</p>
+                  <p class="text-sm text-slate-500">60分</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    コピー
+                  </button>
+                  <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Event Type Item 3 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition">
+              <div class="flex items-center gap-4">
+                <div class="w-2 h-2 rounded-full bg-brand-500"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">カジュアル面談</p>
+                  <p class="text-sm text-slate-500">15分</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    コピー
+                  </button>
+                  <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Event Type Item 4 (Inactive) -->
+            <div class="p-5 group hover:bg-slate-50/50 transition">
+              <div class="flex items-center gap-4">
+                <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-400">技術相談</p>
+                  <p class="text-sm text-slate-400">45分</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-500 transition text-sm font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    コピー
+                  </button>
+                  <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Upcoming Bookings -->
+        <div class="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100">
+          <div class="p-8 border-b border-slate-100">
+            <div class="flex items-center justify-between">
+              <h3 class="font-bold text-lg text-slate-900">今後の予約</h3>
+              <a href="#" class="text-sm text-brand-500 font-semibold hover:text-brand-600 transition">すべて表示 →</a>
+            </div>
+          </div>
+          <div class="divide-y divide-slate-100">
+
+            <!-- Booking Item 1 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-rose-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-rose-500/20">
+                  田
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">田中 太郎</p>
+                  <p class="text-sm text-slate-500">1月30日 (木) 14:00</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  確定
+                </span>
+              </div>
+            </div>
+
+            <!-- Booking Item 2 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/20">
+                  佐
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">佐藤 花子</p>
+                  <p class="text-sm text-slate-500">1月31日 (金) 10:00</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  確定
+                </span>
+              </div>
+            </div>
+
+            <!-- Booking Item 3 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-amber-500/20">
+                  山
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">山本 健一</p>
+                  <p class="text-sm text-slate-500">2月3日 (月) 15:30</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  確定
+                </span>
+              </div>
+            </div>
+
+            <!-- Booking Item 4 -->
+            <div class="p-5 group hover:bg-slate-50/50 transition cursor-pointer">
+              <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-violet-400 to-violet-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-violet-500/20">
+                  鈴
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="font-semibold text-slate-900 group-hover:text-brand-500 transition-colors">鈴木 美咲</p>
+                  <p class="text-sm text-slate-500">2月5日 (水) 11:00</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  確定
+                </span>
+              </div>
+            </div>
+
+            <!-- Show more -->
+            <div class="p-4">
+              <button class="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition">
+                他 4 件を表示
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

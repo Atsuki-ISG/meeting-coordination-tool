@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UI Mockups - Meeting Scheduler</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              500: '#00C198',
+              600: '#00A583',
+            },
+            slate: {
+              50: '#F8FAFC',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+  <div class="max-w-4xl mx-auto px-6 py-16">
+
+    <header class="text-center mb-16">
+      <h1 class="text-4xl font-bold text-slate-900 mb-4">UI Mockups</h1>
+      <p class="text-lg text-slate-500">MeetFlow - 日程調整ツール</p>
+    </header>
+
+    <div class="space-y-4">
+
+      <!-- Dashboard -->
+      <a href="dashboard.html"
+         class="block bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] p-8 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 border border-slate-100 group">
+        <div class="flex items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center group-hover:bg-emerald-500/20 transition">
+            <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-slate-900 group-hover:text-emerald-500 transition">Dashboard</h2>
+            <p class="text-slate-500 mt-1">ダッシュボード - サイドバー付きメイン画面</p>
+          </div>
+          <svg class="w-6 h-6 text-slate-300 group-hover:text-emerald-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Booking Page -->
+      <a href="booking.html"
+         class="block bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] p-8 hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all hover:-translate-y-1 border border-slate-100 group">
+        <div class="flex items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition">
+            <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-slate-900 group-hover:text-blue-500 transition">Booking Page</h2>
+            <p class="text-slate-500 mt-1">予約ページ - 外部ユーザー向け日時選択・フォーム</p>
+          </div>
+          <svg class="w-6 h-6 text-slate-300 group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </div>
+      </a>
+
+      <!-- Reference (React) -->
+      <div class="block bg-slate-100/50 rounded-3xl p-8 border border-dashed border-slate-300">
+        <div class="flex items-center gap-6">
+          <div class="w-16 h-16 rounded-2xl bg-slate-200 flex items-center justify-center">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-slate-500">schedules.jsx</h2>
+            <p class="text-slate-400 mt-1">参考デザイン（React Component）- 直接表示不可</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Design System Summary -->
+    <div class="mt-16 bg-white rounded-2xl shadow-sm p-8">
+      <h3 class="font-semibold text-slate-900 mb-6">Design System</h3>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div>
+          <p class="text-xs font-medium text-slate-400 mb-2">Background</p>
+          <div class="h-12 rounded-xl bg-slate-50 border border-slate-200"></div>
+          <p class="text-xs text-slate-500 mt-1">#F8FAFC</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-400 mb-2">Card</p>
+          <div class="h-12 rounded-xl bg-white shadow-sm"></div>
+          <p class="text-xs text-slate-500 mt-1">#FFFFFF</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-400 mb-2">Accent</p>
+          <div class="h-12 rounded-xl bg-emerald-500"></div>
+          <p class="text-xs text-slate-500 mt-1">#00C198</p>
+        </div>
+        <div>
+          <p class="text-xs font-medium text-slate-400 mb-2">Text</p>
+          <div class="h-12 rounded-xl bg-slate-500"></div>
+          <p class="text-xs text-slate-500 mt-1">#64748B</p>
+        </div>
+      </div>
+
+      <div class="space-y-4 text-sm text-slate-600">
+        <p><strong class="text-slate-900">Concept:</strong> Clean, Airy, Professional, Sophisticated</p>
+        <p><strong class="text-slate-900">Border Radius:</strong> rounded-xl (12px) / rounded-2xl (16px)</p>
+        <p><strong class="text-slate-900">Shadows:</strong> shadow-sm / shadow-md (no hard borders)</p>
+        <p><strong class="text-slate-900">Header:</strong> Frosted glass (backdrop-blur-md, bg-white/80)</p>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

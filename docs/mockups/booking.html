@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>予約ページ - MeetFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              500: '#00C198',
+              600: '#00A583',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+
+    .day-btn:hover { transform: scale(1.05); }
+    .time-slot:hover { transform: translateX(2px); }
+
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen antialiased">
+
+  <!-- Header -->
+  <header class="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50">
+    <div class="max-w-2xl mx-auto px-6 h-16 flex items-center">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-brand-500/20">
+          M
+        </div>
+        <span class="font-bold text-lg text-slate-900">MeetFlow</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-2xl mx-auto px-6 py-12">
+
+    <!-- Main Card -->
+    <div class="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
+
+      <!-- Event Info Header -->
+      <div class="p-8 border-b border-slate-100">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">初回相談</h1>
+        <p class="text-slate-500 mb-4">お気軽にご相談ください。サービスについてのご質問やお悩みをお聞かせください。</p>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-800 font-medium text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          30分
+        </div>
+      </div>
+
+      <!-- Step 1: Date & Time Selection -->
+      <div class="p-8">
+
+        <!-- Date Selection -->
+        <div class="mb-8">
+          <h3 class="text-base font-semibold text-slate-900 mb-4">日付を選択</h3>
+          <div class="flex flex-wrap gap-3">
+            <!-- Date Button - Past (disabled look) -->
+            <button disabled class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 opacity-50 cursor-not-allowed">
+              <span class="text-xs font-medium text-slate-400">水</span>
+              <span class="text-xl font-bold text-slate-400">29</span>
+              <span class="text-xs font-medium text-slate-400">1月</span>
+            </button>
+
+            <!-- Date Button - Selected -->
+            <button class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-brand-500 bg-brand-500 text-white shadow-lg shadow-brand-500/30 day-btn transition-all">
+              <span class="text-xs font-medium text-white">木</span>
+              <span class="text-xl font-bold text-white">30</span>
+              <span class="text-xs font-medium text-white">1月</span>
+            </button>
+
+            <!-- Date Button - Available -->
+            <button class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 hover:border-brand-500 day-btn transition-all">
+              <span class="text-xs font-medium text-slate-500">金</span>
+              <span class="text-xl font-bold">31</span>
+              <span class="text-xs font-medium text-slate-500">1月</span>
+            </button>
+
+            <!-- Date Button - Available -->
+            <button class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 hover:border-brand-500 day-btn transition-all">
+              <span class="text-xs font-medium text-slate-500">月</span>
+              <span class="text-xl font-bold">3</span>
+              <span class="text-xs font-medium text-slate-500">2月</span>
+            </button>
+
+            <!-- Date Button - Available -->
+            <button class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 hover:border-brand-500 day-btn transition-all">
+              <span class="text-xs font-medium text-slate-500">火</span>
+              <span class="text-xl font-bold">4</span>
+              <span class="text-xs font-medium text-slate-500">2月</span>
+            </button>
+
+            <!-- Date Button - Available -->
+            <button class="flex flex-col items-center px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-900 hover:border-brand-500 day-btn transition-all">
+              <span class="text-xs font-medium text-slate-500">水</span>
+              <span class="text-xl font-bold">5</span>
+              <span class="text-xs font-medium text-slate-500">2月</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Time Selection -->
+        <div class="fade-in">
+          <h3 class="text-base font-semibold text-slate-900 mb-4">1月30日 (木) の時間を選択</h3>
+          <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              09:00
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              09:30
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              10:00
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-brand-500 bg-brand-500 text-white font-bold text-sm shadow-sm">
+              10:30
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              11:00
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              14:00
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              14:30
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              15:00
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              15:30
+            </button>
+            <button class="time-slot px-3 py-2.5 rounded-lg border-2 border-slate-200 text-slate-700 font-semibold text-sm hover:border-brand-500 hover:text-brand-600 transition-all">
+              16:00
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Step 2: Booking Form (separate card showing form step) -->
+    <div class="mt-8 bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden fade-in">
+
+      <!-- Event Info Header (same as above) -->
+      <div class="p-8 border-b border-slate-100">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">初回相談</h1>
+        <p class="text-slate-500 mb-4">お気軽にご相談ください。</p>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-800 font-medium text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          30分
+        </div>
+      </div>
+
+      <div class="p-8">
+        <!-- Selected DateTime Summary -->
+        <div class="bg-blue-50 rounded-xl p-4 mb-6">
+          <h3 class="font-medium text-blue-900">初回相談</h3>
+          <p class="text-sm text-blue-700 mt-1">1月30日 (木) 10:30 - 11:00 (30分)</p>
+        </div>
+
+        <!-- Form -->
+        <form class="space-y-5">
+          <!-- Name -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">お名前</label>
+            <input type="text"
+                   class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+                   placeholder="山田 太郎">
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">メールアドレス</label>
+            <input type="email"
+                   class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+                   placeholder="you@example.com">
+          </div>
+
+          <!-- Note -->
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">ご相談内容・備考</label>
+            <textarea rows="4"
+                      class="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400 resize-none"
+                      placeholder="ご相談したい内容や、事前に共有したい情報があればご記入ください"></textarea>
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex gap-3 pt-2">
+            <button type="button"
+                    class="px-6 py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition">
+              戻る
+            </button>
+            <button type="submit"
+                    class="flex-1 py-3 rounded-xl text-white font-bold shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-[1.01] transition-all active:scale-[0.99]"
+                    style="background: linear-gradient(135deg, #00C198, #00a080)">
+              予約を確定する
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Step 3: Confirmation (separate card showing confirmed step) -->
+    <div class="mt-8 bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden fade-in">
+
+      <!-- Event Info Header (same as above) -->
+      <div class="p-8 border-b border-slate-100">
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">初回相談</h1>
+        <p class="text-slate-500 mb-4">お気軽にご相談ください。</p>
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100 text-blue-800 font-medium text-sm">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          30分
+        </div>
+      </div>
+
+      <div class="p-8 space-y-6">
+        <!-- Success Icon & Message -->
+        <div class="text-center">
+          <div class="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900">予約が確定しました</h2>
+          <p class="text-slate-500 mt-2">確認メールとカレンダー招待をお送りしました。</p>
+        </div>
+
+        <!-- Booking Details -->
+        <div class="bg-blue-50 border border-blue-100 rounded-xl p-5">
+          <h3 class="font-semibold text-slate-900">初回相談</h3>
+          <p class="text-slate-700 mt-2">2026年1月30日 (木)</p>
+          <p class="text-lg font-medium text-blue-600">10:30 - 11:00</p>
+        </div>
+
+        <!-- Cancel Info -->
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <h4 class="font-medium text-amber-800">キャンセルする場合</h4>
+          <p class="text-sm text-amber-700 mt-1">以下のリンクからキャンセルできます。このリンクを保存しておいてください。</p>
+          <a href="#" class="mt-3 inline-block px-4 py-2 rounded-lg bg-amber-100 text-amber-800 text-sm font-medium hover:bg-amber-200 transition-colors">
+            キャンセルページを開く
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 mt-16">
+    <div class="max-w-2xl mx-auto px-6 py-8 text-center">
+      <p class="text-sm text-slate-400 font-medium">Powered by MeetFlow</p>
+    </div>
+  </footer>
+
+</body>
+</html>
