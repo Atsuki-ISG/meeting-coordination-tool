@@ -7,7 +7,7 @@ const SECRET = new TextEncoder().encode(
 );
 
 // Routes that require authentication AND team membership
-const protectedRoutes = ['/dashboard', '/event-types', '/bookings', '/members', '/admin', '/settings'];
+const protectedRoutes = ['/dashboard', '/event-types', '/bookings', '/members', '/admin', '/settings', '/invitations'];
 
 // Routes that require authentication but NOT team membership
 const authOnlyRoutes = ['/team'];

@@ -84,6 +84,7 @@ const createBookingSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   note: z.string().min(1, 'ご相談内容・備考は必須です'),
+  invitationToken: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -107,10 +108,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get event type with organizer
+    // Get event type with organizer and team
     const { data: eventType, error: eventTypeError } = await supabase
       .from('event_types')
-      .select('*, organizer:members!event_types_organizer_id_fkey(*)')
+      .select('*, organizer:members!event_types_organizer_id_fkey(*), team:teams(*)')
       .eq('id', validatedData.eventTypeId)
       .eq('is_active', true)
       .single();
@@ -120,6 +121,60 @@ export async function POST(request: NextRequest) {
         { error: 'Event type not found' },
         { status: 404 }
       );
+    }
+
+    // Check if team requires invitation
+    const team = eventType.team;
+    let invitationId: string | null = null;
+
+    if (team?.require_invitation) {
+      if (!validatedData.invitationToken) {
+        return NextResponse.json(
+          { error: 'This booking requires an invitation. Please use a valid invitation link.' },
+          { status: 403 }
+        );
+      }
+
+      // Verify invitation token
+      const { data: invitation, error: invError } = await supabase
+        .from('booking_invitations')
+        .select('*')
+        .eq('token', validatedData.invitationToken)
+        .eq('team_id', team.id)
+        .single();
+
+      if (invError || !invitation) {
+        return NextResponse.json(
+          { error: 'Invalid invitation token' },
+          { status: 403 }
+        );
+      }
+
+      // Check invitation status
+      if (invitation.status !== 'approved') {
+        return NextResponse.json(
+          { error: 'Invitation is not valid or has not been approved' },
+          { status: 403 }
+        );
+      }
+
+      // Check expiration
+      if (invitation.expires_at && new Date(invitation.expires_at) < new Date()) {
+        return NextResponse.json(
+          { error: 'Invitation has expired' },
+          { status: 403 }
+        );
+      }
+
+      // Check max bookings
+      if (invitation.bookings_count >= invitation.max_bookings) {
+        return NextResponse.json(
+          { error: 'Maximum number of bookings reached for this invitation' },
+          { status: 403 }
+        );
+      }
+
+      invitationId = invitation.id;
     }
 
     // Get all members for this event type
@@ -238,6 +293,33 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to create booking' },
         { status: 500 }
       );
+    }
+
+    // Update invitation usage count if applicable
+    if (invitationId) {
+      const { data: currentInvitation } = await supabase
+        .from('booking_invitations')
+        .select('bookings_count, max_bookings')
+        .eq('id', invitationId)
+        .single();
+
+      if (currentInvitation) {
+        const newCount = currentInvitation.bookings_count + 1;
+        const updateData: Record<string, unknown> = {
+          bookings_count: newCount,
+          used_at: new Date().toISOString(),
+        };
+
+        // Mark as 'used' if max bookings reached
+        if (newCount >= currentInvitation.max_bookings) {
+          updateData.status = 'used';
+        }
+
+        await supabase
+          .from('booking_invitations')
+          .update(updateData)
+          .eq('id', invitationId);
+      }
     }
 
     // Log API usage
