@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { Sidebar } from '@/components/layout/sidebar';
 
 interface UsageStats {
@@ -16,11 +17,45 @@ interface SystemSettings {
   maintenanceMode: { enabled: boolean; message: string };
 }
 
+interface PendingMember {
+  id: string;
+  name: string;
+  email: string;
+  created_at: string;
+}
+
+interface AllMember {
+  id: string;
+  name: string;
+  email: string;
+  status: 'pending' | 'active' | 'suspended';
+  is_system_admin: boolean;
+  team_id: string | null;
+  created_at: string;
+}
+
 export default function AdminPage() {
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
+  const [allMembers, setAllMembers] = useState<AllMember[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
+
+  const fetchMembers = async () => {
+    try {
+      const res = await fetch('/api/admin/members');
+      if (res.ok) {
+        const data = await res.json();
+        setPendingMembers(data.pending || []);
+        setAllMembers(data.all || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch members:', error);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -39,6 +74,8 @@ export default function AdminPage() {
           const data = await settingsRes.json();
           setSettings(data);
         }
+
+        await fetchMembers();
       } catch (error) {
         console.error('Failed to fetch admin data:', error);
       } finally {
@@ -48,6 +85,44 @@ export default function AdminPage() {
 
     fetchData();
   }, []);
+
+  const updateMemberStatus = async (memberId: string, status: 'active' | 'suspended') => {
+    setProcessingId(memberId);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        await fetchMembers();
+      }
+    } catch (error) {
+      console.error('Failed to update member:', error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const toggleSystemAdmin = async (memberId: string, isSystemAdmin: boolean) => {
+    setProcessingId(memberId);
+    try {
+      const res = await fetch(`/api/admin/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_system_admin: !isSystemAdmin }),
+      });
+
+      if (res.ok) {
+        await fetchMembers();
+      }
+    } catch (error) {
+      console.error('Failed to toggle system admin:', error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
 
   const toggleMaintenanceMode = async () => {
     if (!settings) return;
@@ -193,6 +268,178 @@ export default function AdminPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* User Management */}
+          <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 mb-8">
+            <div className="p-8 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-lg text-slate-900">ユーザー管理</h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setActiveTab('pending')}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      activeTab === 'pending'
+                        ? 'bg-amber-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    承認待ち ({pendingMembers.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                      activeTab === 'all'
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    全ユーザー ({allMembers.length})
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {activeTab === 'pending' ? (
+              <div className="divide-y divide-slate-100">
+                {pendingMembers.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <p className="text-slate-500">承認待ちのユーザーはいません</p>
+                  </div>
+                ) : (
+                  pendingMembers.map((member) => (
+                    <div key={member.id} className="p-6 hover:bg-slate-50/50 transition">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg">
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-900">{member.name}</p>
+                            <p className="text-sm text-slate-500">{member.email}</p>
+                            <p className="text-xs text-slate-400 mt-1">
+                              登録: {format(new Date(member.created_at), 'yyyy/MM/dd HH:mm', { locale: ja })}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateMemberStatus(member.id, 'active')}
+                            disabled={processingId === member.id}
+                            className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                          >
+                            {processingId === member.id ? '処理中...' : '承認'}
+                          </button>
+                          <button
+                            onClick={() => updateMemberStatus(member.id, 'suspended')}
+                            disabled={processingId === member.id}
+                            className="px-4 py-2 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition disabled:opacity-50"
+                          >
+                            拒否
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {allMembers.length === 0 ? (
+                  <div className="p-12 text-center">
+                    <p className="text-slate-500">ユーザーがいません</p>
+                  </div>
+                ) : (
+                  allMembers.map((member) => (
+                    <div key={member.id} className="p-6 hover:bg-slate-50/50 transition">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg ${
+                            member.status === 'active'
+                              ? 'from-brand-400 to-brand-600'
+                              : member.status === 'pending'
+                              ? 'from-amber-400 to-amber-600'
+                              : 'from-slate-400 to-slate-600'
+                          }`}>
+                            {member.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-semibold text-slate-900">{member.name}</p>
+                              {member.is_system_admin && (
+                                <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
+                                  システム管理者
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm text-slate-500">{member.email}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                member.status === 'active'
+                                  ? 'bg-green-100 text-green-700'
+                                  : member.status === 'pending'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {member.status === 'active' ? '有効' : member.status === 'pending' ? '承認待ち' : '停止中'}
+                              </span>
+                              {member.team_id && (
+                                <span className="text-xs text-slate-400">チーム所属</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {member.status === 'active' ? (
+                            <>
+                              <button
+                                onClick={() => toggleSystemAdmin(member.id, member.is_system_admin)}
+                                disabled={processingId === member.id}
+                                className={`px-3 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-50 ${
+                                  member.is_system_admin
+                                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                              >
+                                {member.is_system_admin ? '管理者解除' : '管理者に昇格'}
+                              </button>
+                              <button
+                                onClick={() => updateMemberStatus(member.id, 'suspended')}
+                                disabled={processingId === member.id}
+                                className="px-3 py-2 bg-red-100 text-red-600 font-semibold rounded-xl hover:bg-red-200 transition disabled:opacity-50 text-sm"
+                              >
+                                停止
+                              </button>
+                            </>
+                          ) : member.status === 'suspended' ? (
+                            <button
+                              onClick={() => updateMemberStatus(member.id, 'active')}
+                              disabled={processingId === member.id}
+                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                            >
+                              再有効化
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => updateMemberStatus(member.id, 'active')}
+                              disabled={processingId === member.id}
+                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                            >
+                              承認
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
 
           {/* Usage Statistics */}

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
-import { TimeSlotPicker } from '@/components/booking/time-slot-picker';
+import { CalendarPicker } from '@/components/booking/calendar-picker';
 import { BookingForm } from '@/components/booking/booking-form';
 import type { TimeSlot } from '@/types';
 
@@ -177,7 +177,7 @@ export default function BookingPage() {
           {/* Content */}
           <div className="p-8">
             {step === 'select-time' && (
-              <TimeSlotPicker
+              <CalendarPicker
                 slots={slots}
                 selectedSlot={selectedSlot}
                 onSelectSlot={handleSelectSlot}

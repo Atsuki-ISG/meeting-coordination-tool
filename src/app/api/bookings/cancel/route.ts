@@ -7,6 +7,12 @@ import {
   refreshAccessToken,
 } from '@/lib/google-calendar/client';
 import { verifyToken } from '@/lib/utils/token';
+import {
+  isShortTermRateLimited,
+  isMonthlyLimitExceeded,
+  getClientIp,
+  invalidateMonthlyCache,
+} from '@/lib/rate-limit';
 
 const cancelSchema = z.object({
   bookingId: z.string().uuid(),
@@ -15,6 +21,24 @@ const cancelSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check: Short-term (IP-based)
+    const clientIp = getClientIp(request.headers);
+    if (isShortTermRateLimited(clientIp)) {
+      return NextResponse.json(
+        { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+        { status: 429 }
+      );
+    }
+
+    // Rate limit check: Monthly usage
+    const monthlyLimit = await isMonthlyLimitExceeded();
+    if (monthlyLimit.exceeded) {
+      return NextResponse.json(
+        { error: '月間API上限に達しました。管理者にお問い合わせください。' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = cancelSchema.parse(body);
 
@@ -115,6 +139,9 @@ export async function POST(request: NextRequest) {
       member_id: booking.event_type?.organizer_id,
       request_count: 1,
     });
+
+    // Invalidate monthly cache after logging
+    invalidateMonthlyCache();
 
     return NextResponse.json({
       success: true,

@@ -53,6 +53,15 @@ export async function GET(request: NextRequest) {
     let memberId: string;
     let teamId: string | null = null;
 
+    // Check if this user is the system admin (from environment variable)
+    const systemAdminEmails = (process.env.SYSTEM_ADMIN_EMAILS || '')
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean);
+    const isSystemAdmin = systemAdminEmails.includes(userInfo.email.toLowerCase());
+
+    let memberStatus: 'pending' | 'active' = 'pending';
+
     if (existingMember) {
       // Update existing member
       await supabase
@@ -63,13 +72,24 @@ export async function GET(request: NextRequest) {
           google_token_expires_at: tokens.expiry_date
             ? new Date(tokens.expiry_date).toISOString()
             : null,
+          // Promote to system admin if in env var (but don't demote)
+          ...(isSystemAdmin ? { is_system_admin: true, status: 'active' } : {}),
           updated_at: new Date().toISOString(),
         })
         .eq('id', existingMember.id);
       memberId = existingMember.id;
       teamId = existingMember.team_id;
+
+      // Get current status
+      const { data: memberData } = await supabase
+        .from('members')
+        .select('status')
+        .eq('id', existingMember.id)
+        .single();
+      memberStatus = memberData?.status || 'pending';
     } else {
       // Create new member
+      // System admin from env is auto-approved, others are pending
       const { data: newMember, error: insertError } = await supabase
         .from('members')
         .insert({
@@ -79,6 +99,8 @@ export async function GET(request: NextRequest) {
           google_token_expires_at: tokens.expiry_date
             ? new Date(tokens.expiry_date).toISOString()
             : null,
+          status: isSystemAdmin ? 'active' : 'pending',
+          is_system_admin: isSystemAdmin,
         })
         .select('id')
         .single();
@@ -88,6 +110,7 @@ export async function GET(request: NextRequest) {
       }
       memberId = newMember.id;
       teamId = null;
+      memberStatus = isSystemAdmin ? 'active' : 'pending';
     }
 
     // Create session token
@@ -96,11 +119,20 @@ export async function GET(request: NextRequest) {
       email: userInfo.email,
       name: userInfo.name,
       teamId,
+      status: memberStatus,
+      isSystemAdmin,
     });
 
-    // Redirect based on team membership
-    const defaultRedirect = teamId ? '/dashboard' : '/team';
-    const redirectUrl = state || defaultRedirect;
+    // Redirect based on member status and team membership
+    let defaultRedirect: string;
+    if (memberStatus === 'pending') {
+      defaultRedirect = '/pending-approval';
+    } else if (teamId) {
+      defaultRedirect = '/dashboard';
+    } else {
+      defaultRedirect = '/team';
+    }
+    const redirectUrl = memberStatus === 'pending' ? '/pending-approval' : (state || defaultRedirect);
     const response = NextResponse.redirect(
       new URL(redirectUrl, process.env.NEXT_PUBLIC_APP_URL)
     );

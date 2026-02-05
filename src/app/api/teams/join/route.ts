@@ -72,6 +72,8 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       teamId: team.id,
+      status: user.status,
+      isSystemAdmin: user.isSystemAdmin,
     });
 
     return NextResponse.json({ team });

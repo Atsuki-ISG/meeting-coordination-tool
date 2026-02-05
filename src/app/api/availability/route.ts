@@ -7,11 +7,34 @@ import {
   createCalendarClient,
   refreshAccessToken,
 } from '@/lib/google-calendar/client';
+import {
+  isShortTermRateLimited,
+  isMonthlyLimitExceeded,
+  getClientIp,
+  invalidateMonthlyCache,
+} from '@/lib/rate-limit';
 import type { BusySlot, Member, WeeklyAvailability } from '@/types';
 import { DEFAULT_AVAILABILITY } from '@/types';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limit check: Short-term (IP-based)
+    const clientIp = getClientIp(request.headers);
+    if (isShortTermRateLimited(clientIp)) {
+      return NextResponse.json(
+        { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+        { status: 429 }
+      );
+    }
+
+    // Rate limit check: Monthly usage
+    const monthlyLimit = await isMonthlyLimitExceeded();
+    if (monthlyLimit.exceeded) {
+      return NextResponse.json(
+        { error: '月間API上限に達しました。管理者にお問い合わせください。' },
+        { status: 429 }
+      );
+    }
     const searchParams = request.nextUrl.searchParams;
     const eventTypeId = searchParams.get('eventTypeId');
     const daysAhead = parseInt(searchParams.get('daysAhead') || '14', 10);
@@ -114,6 +137,9 @@ export async function GET(request: NextRequest) {
       member_id: eventType.organizer_id,
       request_count: members.length, // Count FreeBusy API calls
     });
+
+    // Invalidate monthly cache after logging
+    invalidateMonthlyCache();
 
     return NextResponse.json({
       slots: availableSlots,

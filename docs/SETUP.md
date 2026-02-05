@@ -6,12 +6,12 @@
 - Google Cloud Platform アカウント
 - Supabase アカウント
 - GitHub アカウント（デプロイ用）
-- Vercel アカウント（デプロイ用）
 
 ### 必要なソフトウェア
 - Node.js 20.x 以上
 - npm 10.x 以上
 - Git
+- Google Cloud CLI（Cloud Run デプロイ用）
 
 ---
 
@@ -46,6 +46,8 @@ cp .env.example .env.local
 | `GOOGLE_CLIENT_SECRET` | 必須 | Google OAuthクライアントシークレット | `GOCSPX-xxx` |
 | `ENCRYPTION_KEY` | 必須 | 暗号化キー（32バイトhex） | `64文字のhex` |
 | `NEXT_PUBLIC_APP_URL` | 必須 | アプリケーションURL | `http://localhost:3000` |
+| `SYSTEM_ADMIN_EMAILS` | 推奨 | システム管理者メールアドレス（カンマ区切り） | `admin@example.com` |
+| `USAGE_ALERT_THRESHOLD` | 任意 | 月間API使用量上限 | `800000` |
 
 ### 暗号化キーの生成
 
@@ -70,6 +72,8 @@ Supabase SQL Editor で以下のファイルを順番に実行：
 1. `supabase/migrations/001_initial_schema.sql`
 2. `supabase/migrations/002_availability_settings.sql`
 3. `supabase/migrations/003_teams.sql`
+4. `supabase/migrations/004_member_roles.sql`
+5. `supabase/migrations/005_system_admin.sql`
 
 ### 4.3 API設定の取得
 
@@ -142,7 +146,33 @@ http://localhost:3000 でアクセス可能。
 
 ---
 
-## 7. トラブルシューティング
+## 7. 初期システム管理者の設定
+
+システム管理者がいないと新規ユーザーを承認できません。
+
+### 方法1: 環境変数で設定（推奨）
+
+`.env.local` に以下を追加：
+
+```
+SYSTEM_ADMIN_EMAILS=your-email@example.com
+```
+
+このメールアドレスでログインすると、自動的にシステム管理者になります。
+
+### 方法2: SQLで直接設定
+
+Supabase SQL Editor で実行：
+
+```sql
+UPDATE members
+SET is_system_admin = true, status = 'active'
+WHERE email = 'your-email@example.com';
+```
+
+---
+
+## 8. トラブルシューティング
 
 ### Google認証エラー
 
@@ -177,9 +207,18 @@ http://localhost:3000 でアクセス可能。
 openssl rand -hex 32  # 64文字のhex文字列が出力される
 ```
 
+### 承認待ち状態から抜けられない
+
+**原因**: システム管理者が設定されていない
+
+**解決策**:
+1. `SYSTEM_ADMIN_EMAILS` 環境変数を設定
+2. または SQL で直接 `is_system_admin = true` に設定
+3. ログアウト → 再ログイン
+
 ---
 
-## 8. 設定チェックリスト
+## 9. 設定チェックリスト
 
 ### 開発環境
 
@@ -188,16 +227,18 @@ openssl rand -hex 32  # 64文字のhex文字列が出力される
 - [ ] `npm install` 完了
 - [ ] `.env.local` 作成済み
 - [ ] Supabaseプロジェクト作成済み
-- [ ] DBマイグレーション実行済み
+- [ ] DBマイグレーション実行済み（5ファイル全て）
 - [ ] Google Cloud プロジェクト作成済み
 - [ ] Calendar API 有効化済み
 - [ ] OAuth クライアントID 作成済み
 - [ ] localhost のリダイレクトURI 追加済み
+- [ ] `SYSTEM_ADMIN_EMAILS` 設定済み
 
 ### 本番環境
 
 - [ ] 本番用 `ENCRYPTION_KEY` を新規生成
-- [ ] Vercel に環境変数を設定
+- [ ] Cloud Run に環境変数を設定
 - [ ] Google OAuth リダイレクトURIに本番URL追加
 - [ ] Supabase URL Configuration に本番URL追加
 - [ ] Google OAuth 同意画面を「本番環境」に変更
+- [ ] `SYSTEM_ADMIN_EMAILS` 設定済み

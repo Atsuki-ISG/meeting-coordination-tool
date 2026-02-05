@@ -11,6 +11,8 @@ export interface SessionUser {
   email: string;
   name: string;
   teamId: string | null;
+  status: 'pending' | 'active' | 'suspended';
+  isSystemAdmin: boolean;
 }
 
 export async function getSessionUser(): Promise<SessionUser | null> {
@@ -26,6 +28,8 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       email: payload.email as string,
       name: payload.name as string,
       teamId: (payload.teamId as string) || null,
+      status: (payload.status as 'pending' | 'active' | 'suspended') || 'active',
+      isSystemAdmin: (payload.isSystemAdmin as boolean) || false,
     };
   } catch {
     return null;

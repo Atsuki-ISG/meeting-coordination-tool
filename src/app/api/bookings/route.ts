@@ -10,6 +10,12 @@ import {
   getFreeBusy,
 } from '@/lib/google-calendar/client';
 import { generateToken, hashToken } from '@/lib/utils/token';
+import {
+  isShortTermRateLimited,
+  isMonthlyLimitExceeded,
+  getClientIp,
+  invalidateMonthlyCache,
+} from '@/lib/rate-limit';
 import type { BusySlot } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -88,6 +94,24 @@ const createBookingSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check: Short-term (IP-based)
+    const clientIp = getClientIp(request.headers);
+    if (isShortTermRateLimited(clientIp)) {
+      return NextResponse.json(
+        { error: 'リクエストが多すぎます。しばらく待ってから再試行してください。' },
+        { status: 429 }
+      );
+    }
+
+    // Rate limit check: Monthly usage
+    const monthlyLimit = await isMonthlyLimitExceeded();
+    if (monthlyLimit.exceeded) {
+      return NextResponse.json(
+        { error: '月間API上限に達しました。管理者にお問い合わせください。' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const validatedData = createBookingSchema.parse(body);
 
@@ -246,6 +270,9 @@ export async function POST(request: NextRequest) {
       member_id: eventType.organizer_id,
       request_count: members.length + 1, // FreeBusy calls + event creation
     });
+
+    // Invalidate monthly cache after logging
+    invalidateMonthlyCache();
 
     // Build cancel URL
     const cancelUrl = `${process.env.NEXT_PUBLIC_APP_URL}/cancel/${cancelToken}?bookingId=${booking.id}`;

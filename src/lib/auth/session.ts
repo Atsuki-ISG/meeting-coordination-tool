@@ -2,15 +2,21 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
 export const SESSION_COOKIE_NAME = 'session';
-const SECRET = new TextEncoder().encode(
-  process.env.ENCRYPTION_KEY || 'fallback-secret-key-for-development'
-);
+
+function getSecret(): Uint8Array {
+  if (!process.env.ENCRYPTION_KEY) {
+    throw new Error('ENCRYPTION_KEY environment variable is required');
+  }
+  return new TextEncoder().encode(process.env.ENCRYPTION_KEY);
+}
 
 export interface SessionPayload {
   memberId: string;
   email: string;
   name: string;
   teamId: string | null;
+  status: 'pending' | 'active' | 'suspended';
+  isSystemAdmin: boolean;
   expiresAt: Date;
 }
 
@@ -26,7 +32,7 @@ export async function createSessionToken(payload: Omit<SessionPayload, 'expiresA
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(expiresAt)
-    .sign(SECRET);
+    .sign(getSecret());
 
   return { token, expiresAt };
 }
@@ -56,12 +62,14 @@ export async function getSession(): Promise<SessionPayload | null> {
   if (!token) return null;
 
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getSecret());
     return {
       memberId: payload.memberId as string,
       email: payload.email as string,
       name: payload.name as string,
       teamId: (payload.teamId as string) || null,
+      status: (payload.status as 'pending' | 'active' | 'suspended') || 'active',
+      isSystemAdmin: (payload.isSystemAdmin as boolean) || false,
       expiresAt: new Date(payload.exp! * 1000),
     };
   } catch {

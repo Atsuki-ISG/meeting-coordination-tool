@@ -19,6 +19,9 @@ export const DEFAULT_AVAILABILITY: WeeklyAvailability = {
   "6": { enabled: false, startTime: "09:00", endTime: "18:00" }, // Saturday
 };
 
+// Member status types
+export type MemberStatus = 'pending' | 'active' | 'suspended';
+
 // Database types
 export interface Member {
   id: string;
@@ -29,6 +32,8 @@ export interface Member {
   is_active: boolean;
   availability_settings: WeeklyAvailability | null;
   role: 'admin' | 'member';
+  status: MemberStatus;
+  is_system_admin: boolean;
   team_id: string | null;
   created_at: string;
   updated_at: string;
@@ -38,6 +43,7 @@ export interface Team {
   id: string;
   name: string;
   invite_code: string;
+  status: 'pending' | 'active';
   created_by: string;
   created_at: string;
   updated_at: string;

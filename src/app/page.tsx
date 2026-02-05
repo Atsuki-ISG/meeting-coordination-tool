@@ -33,8 +33,8 @@ export default function Home() {
                 シンプルに
               </h1>
               <p className="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                Googleカレンダーと連携し、チームメンバーの空き時間を自動で表示。
-                面倒なやり取りなしで、最適な時間を見つけられます。
+                Googleカレンダーと連携し、チームメンバーの空き時間を自動でマージ。
+                外部の方はカレンダーから直感的に予約できます。
               </p>
               <div className="mt-10 flex items-center justify-center gap-4">
                 <Link href="/login">
@@ -87,12 +87,12 @@ export default function Home() {
               <div className="group p-8 rounded-3xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <svg className="w-7 h-7 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">プライバシー保護</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">カレンダー形式の予約画面</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  予定の詳細は非公開。空き時間のみを安全に共有します。
+                  月間カレンダーで空き状況を一目で把握。日付ごとの空き枠数も表示します。
                 </p>
               </div>
 
@@ -109,27 +109,72 @@ export default function Home() {
               </div>
 
               <div className="group p-8 rounded-3xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
-                <div className="mb-6 w-14 h-14 rounded-2xl bg-rose-100 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <svg className="w-7 h-7 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">自動通知</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  予約確定・キャンセル時にメールで自動通知。見逃しを防ぎます。
-                </p>
-              </div>
-
-              <div className="group p-8 rounded-3xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
                 <div className="mb-6 w-14 h-14 rounded-2xl bg-cyan-100 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <svg className="w-7 h-7 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Google Meet連携</h3>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Google Meet自動生成</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  予約時にGoogle Meetリンクを自動生成。すぐにオンライン会議を開始。
+                  予約時にGoogle Meetリンクを自動生成。すぐにオンライン会議を開始できます。
                 </p>
+              </div>
+
+              <div className="group p-8 rounded-3xl bg-slate-50 hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300">
+                <div className="mb-6 w-14 h-14 rounded-2xl bg-rose-100 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <svg className="w-7 h-7 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">承認制アクセス管理</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  システム管理者による承認制で、安全にチームメンバーを管理できます。
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="py-24 bg-slate-50">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-slate-900">使い方</h2>
+              <p className="mt-4 text-slate-600">3ステップで簡単に始められます</p>
+            </div>
+            <div className="grid gap-8 md:grid-cols-3">
+              <div className="relative">
+                <div className="absolute -left-4 top-0 w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-lg">
+                  1
+                </div>
+                <div className="pl-10">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">ログイン & 承認</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    Googleアカウントでログイン。システム管理者の承認後、チームを作成または参加します。
+                  </p>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="absolute -left-4 top-0 w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-lg">
+                  2
+                </div>
+                <div className="pl-10">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">予約メニューを作成</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    ミーティングの種類、所要時間、参加メンバーを設定。予約リンクが自動生成されます。
+                  </p>
+                </div>
+              </div>
+              <div className="relative">
+                <div className="absolute -left-4 top-0 w-10 h-10 rounded-full bg-brand-500 text-white font-bold flex items-center justify-center text-lg">
+                  3
+                </div>
+                <div className="pl-10">
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">リンクを共有</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    予約リンクを相手に送るだけ。カレンダーから空き日時を選んで予約完了です。
+                  </p>
+                </div>
               </div>
             </div>
           </div>

@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update member with team_id
+    // Update member with team_id and set as admin
     await supabase
       .from('members')
-      .update({ team_id: team.id })
+      .update({ team_id: team.id, role: 'admin' })
       .eq('id', user.memberId);
 
     // Update any existing event_types to belong to this team
@@ -100,6 +100,8 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       teamId: team.id,
+      status: user.status,
+      isSystemAdmin: user.isSystemAdmin,
     });
 
     return NextResponse.json(team, { status: 201 });
@@ -279,6 +281,8 @@ export async function DELETE() {
     email: user.email,
     name: user.name,
     teamId: null,
+    status: user.status,
+    isSystemAdmin: user.isSystemAdmin,
   });
 
   return NextResponse.json({ success: true });

@@ -14,6 +14,7 @@
 | [DEPLOYMENT.md](./DEPLOYMENT.md) | デプロイ手順 | 開発者・管理者 |
 | [ADMIN_GUIDE.md](./ADMIN_GUIDE.md) | 運用マニュアル | 管理者 |
 | [USER_GUIDE.md](./USER_GUIDE.md) | 操作手順書 | エンドユーザー |
+| [auth-cookie-issues.md](./auth-cookie-issues.md) | 認証トラブルシューティング | 開発者 |
 
 ---
 
@@ -26,10 +27,12 @@
 
 ### 主要機能
 - Googleアカウントでログイン・カレンダー連携
+- **システム管理者によるユーザー承認制**
 - チーム作成・招待コードでの参加
 - 予約メニュー（イベントタイプ）の作成・管理
-- 外部向け予約ページの公開
+- **カレンダー形式の予約ページ**（日付ごとの空き枠数表示）
 - 予約のキャンセル機能
+- **APIレート制限**（短期・月間）
 - API利用量の監視
 
 ### 技術スタック
@@ -38,7 +41,7 @@
 - **データベース**: Supabase (PostgreSQL)
 - **認証**: カスタムJWTセッション + Google OAuth 2.0
 - **カレンダー連携**: Google Calendar API
-- **デプロイ**: Vercel
+- **デプロイ**: Google Cloud Run
 
 ---
 

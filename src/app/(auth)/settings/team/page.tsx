@@ -433,7 +433,7 @@ export default function TeamSettingsPage() {
                   </div>
                   <button
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="px-5 py-2.5 bg-red-50 text-red-600 font-semibold rounded-xl hover:bg-red-100 transition"
+                    className="px-5 py-2.5 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition shadow-lg shadow-red-500/25"
                   >
                     チームを削除
                   </button>
