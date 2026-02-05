@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
     // Encrypt refresh token for storage
     const encryptedRefreshToken = encryptRefreshToken(tokens.refresh_token);
 
-    // Create or update member in database
     const supabase = await createServiceClient();
 
+    // Check if member already exists
     const { data: existingMember } = await supabase
       .from('members')
       .select('id, team_id')

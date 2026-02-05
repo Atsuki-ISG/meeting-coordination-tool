@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSessionUser } from '@/lib/auth/api';
-import { isSlotAvailable, mergeBusySlots } from '@/lib/availability/calculator';
+import { isSlotAvailable } from '@/lib/availability/calculator';
 import {
   createCalendarClient,
   createCalendarEvent,
