@@ -85,7 +85,7 @@ output: 'standalone',
 
 ```bash
 # Cloud Run にデプロイ（環境変数を設定）
-gcloud run deploy meeting-coordination-tool \
+gcloud run deploy meetflow \
   --source . \
   --region asia-northeast1 \
   --allow-unauthenticated \
@@ -220,3 +220,56 @@ Vercelダッシュボード → Settings → Environment Variables に上記の�
 - 上限到達時は予約機能を一時停止
 
 監視は `/admin` 画面で確認できます。
+
+---
+
+## 日常的なデプロイフロー
+
+コード変更後の更新デプロイ手順。
+
+### 1. 変更をコミット＆プッシュ
+
+```bash
+cd ~/Claude/meetflow
+git add -A
+git commit -m "変更内容の説明"
+git push origin main
+```
+
+### 2. Cloud Runにデプロイ
+
+```bash
+# 認証確認（必要な場合のみ）
+gcloud auth login
+
+# デプロイ実行
+gcloud run deploy meetflow \
+  --source . \
+  --region asia-northeast1 \
+  --allow-unauthenticated
+```
+
+**注意**: 環境変数を変更する場合は `--update-env-vars` を追加：
+
+```bash
+gcloud run deploy meetflow \
+  --source . \
+  --region asia-northeast1 \
+  --allow-unauthenticated \
+  --update-env-vars "KEY=value"
+```
+
+### 3. デプロイ確認
+
+1. Cloud Run コンソールでデプロイ状況を確認
+2. サービスURLにアクセスして動作確認
+3. 必要に応じてログを確認：
+   ```bash
+   gcloud run services logs read meetflow --region asia-northeast1
+   ```
+
+### クイックデプロイ（ワンライナー）
+
+```bash
+cd ~/Claude/meeting-coordination-tool && git add -A && git commit -m "Update" && git push origin main && gcloud run deploy meetflow --source . --region asia-northeast1 --allow-unauthenticated
+```
