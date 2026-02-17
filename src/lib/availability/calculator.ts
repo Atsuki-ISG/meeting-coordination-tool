@@ -1,6 +1,29 @@
-import { addMinutes, startOfDay, endOfDay, isAfter, isBefore, max, min, getDay } from 'date-fns';
+import { addMinutes, max, min } from 'date-fns';
 import type { TimeSlot, BusySlot, DateRange, WeeklyAvailability } from '@/types';
 import { DEFAULT_AVAILABILITY } from '@/types';
+
+// Japan Standard Time is UTC+9 (no DST)
+const JST_OFFSET_MS = 9 * 60 * 60 * 1000;
+
+/** Returns the start of day (midnight) in JST, expressed as a UTC Date */
+function startOfDayJST(date: Date): Date {
+  const jstDate = new Date(date.getTime() + JST_OFFSET_MS);
+  return new Date(
+    Date.UTC(jstDate.getUTCFullYear(), jstDate.getUTCMonth(), jstDate.getUTCDate()) - JST_OFFSET_MS
+  );
+}
+
+/** Returns the day of week (0=Sun, 6=Sat) in JST */
+function getDayJST(date: Date): number {
+  return new Date(date.getTime() + JST_OFFSET_MS).getUTCDay();
+}
+
+/** Creates a Date representing the given hours:minutes in JST for the day of `date` */
+function setHoursJST(date: Date, hours: number, minutes: number): Date {
+  const jstDate = new Date(date.getTime() + JST_OFFSET_MS);
+  jstDate.setUTCHours(hours, minutes, 0, 0);
+  return new Date(jstDate.getTime() - JST_OFFSET_MS);
+}
 
 interface AvailabilityConfig {
   slotDurationMinutes: number;
@@ -58,7 +81,7 @@ function getWorkingHours(
   date: Date,
   config: AvailabilityConfig
 ): { start: Date; end: Date; enabled: boolean } {
-  const dayOfWeek = getDay(date); // 0 = Sunday, 6 = Saturday
+  const dayOfWeek = getDayJST(date); // 0 = Sunday, 6 = Saturday (in JST)
   const daySettings = config.weeklyAvailability[String(dayOfWeek)];
 
   if (!daySettings || !daySettings.enabled) {
@@ -68,11 +91,8 @@ function getWorkingHours(
   const [startHour, startMin] = daySettings.startTime.split(':').map(Number);
   const [endHour, endMin] = daySettings.endTime.split(':').map(Number);
 
-  const start = new Date(date);
-  start.setHours(startHour, startMin, 0, 0);
-
-  const end = new Date(date);
-  end.setHours(endHour, endMin, 0, 0);
+  const start = setHoursJST(date, startHour, startMin);
+  const end = setHoursJST(date, endHour, endMin);
 
   return { start, end, enabled: true };
 }
@@ -150,11 +170,11 @@ export function calculateAvailability(
 
   const availableSlots: TimeSlot[] = [];
 
-  // Iterate through each day in the range
-  let currentDate = startOfDay(dateRange.start);
-  const endDate = endOfDay(dateRange.end);
+  // Iterate through each day in the range (JST-aware)
+  let currentDate = startOfDayJST(dateRange.start);
+  const endDate = new Date(startOfDayJST(dateRange.end).getTime() + 24 * 60 * 60 * 1000);
 
-  while (currentDate <= endDate) {
+  while (currentDate < endDate) {
     const { start: workStart, end: workEnd, enabled } = getWorkingHours(
       currentDate,
       finalConfig
@@ -162,7 +182,7 @@ export function calculateAvailability(
 
     // Skip disabled days (weekends or custom disabled days)
     if (!enabled) {
-      currentDate = addMinutes(startOfDay(currentDate), 24 * 60);
+      currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
       continue;
     }
 
@@ -171,7 +191,7 @@ export function calculateAvailability(
 
     // Skip if the entire working day is in the past
     if (effectiveStart >= workEnd) {
-      currentDate = addMinutes(startOfDay(currentDate), 24 * 60);
+      currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
       continue;
     }
 
@@ -189,8 +209,8 @@ export function calculateAvailability(
       availableSlots.push(...slots);
     }
 
-    // Move to next day
-    currentDate = addMinutes(startOfDay(currentDate), 24 * 60);
+    // Move to next JST day (Japan has no DST, so always 24 hours)
+    currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
   }
 
   return availableSlots;
