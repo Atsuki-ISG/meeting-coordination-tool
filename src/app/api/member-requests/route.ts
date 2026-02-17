@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { getApiSession } from '@/lib/auth/api';
+import { getSessionUser } from '@/lib/auth/api';
 
 // GET: List member requests (admin only)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getApiSession();
+    const session = await getSessionUser();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
