@@ -329,7 +329,7 @@ export default function EventTypeDetailPage() {
                 </div>
 
                 {/* Members Selection */}
-                {members.filter((m) => !m.is_note_taker).length > 1 && (
+                {members.filter((m) => !m.is_note_taker).length >= 1 && (
                   <div>
                     {/* Participation Mode */}
                     <label className="block text-sm font-semibold text-slate-700 mb-2">

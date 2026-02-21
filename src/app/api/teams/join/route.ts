@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     // Switch active team and activate account if pending
     await supabase
       .from('members')
-      .update({ team_id: team.id, role: 'member', status: 'active' })
+      .update({ team_id: team.id, role: 'member', status: 'active', is_active: true })
       .eq('id', user.memberId);
 
     // Update session with team_id and active status
