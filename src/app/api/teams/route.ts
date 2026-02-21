@@ -34,20 +34,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceClient();
 
-    // Check if user already belongs to a team
-    const { data: existingMember } = await supabase
-      .from('members')
-      .select('team_id')
-      .eq('id', user.memberId)
-      .single();
-
-    if (existingMember?.team_id) {
-      return NextResponse.json(
-        { error: 'Already belongs to a team' },
-        { status: 400 }
-      );
-    }
-
     // Generate unique invite code
     let inviteCode = generateInviteCode();
     let attempts = 0;
@@ -82,17 +68,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update member with team_id and set as admin
+    // Add to team_memberships
+    await supabase
+      .from('team_memberships')
+      .upsert({ member_id: user.memberId, team_id: team.id, role: 'admin' });
+
+    // Switch active team to the newly created one
     await supabase
       .from('members')
       .update({ team_id: team.id, role: 'admin' })
       .eq('id', user.memberId);
-
-    // Update any existing event_types to belong to this team
-    await supabase
-      .from('event_types')
-      .update({ team_id: team.id })
-      .eq('organizer_id', user.memberId);
 
     // Update session with team_id
     await createSession({
@@ -162,7 +147,7 @@ export async function GET() {
     ? team
     : { ...team, invite_code: undefined };
 
-  return NextResponse.json({ team: teamData, role: member.role });
+  return NextResponse.json({ team: teamData, role: member.role, memberId: user.memberId });
 }
 
 // Update team (admin only)
@@ -249,11 +234,39 @@ export async function DELETE() {
 
   const teamId = member.team_id;
 
-  // Remove team_id from all members
-  await supabase
-    .from('members')
-    .update({ team_id: null, role: 'member' })
+  // Get all members of this team from team_memberships
+  const { data: teamMemberships } = await supabase
+    .from('team_memberships')
+    .select('member_id')
     .eq('team_id', teamId);
+
+  // Remove team_memberships for this team
+  await supabase
+    .from('team_memberships')
+    .delete()
+    .eq('team_id', teamId);
+
+  // For each member whose active team was this team, switch to another or null
+  if (teamMemberships && teamMemberships.length > 0) {
+    for (const { member_id } of teamMemberships) {
+      const { data: nextMembership } = await supabase
+        .from('team_memberships')
+        .select('team_id, role')
+        .eq('member_id', member_id)
+        .order('joined_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      await supabase
+        .from('members')
+        .update({
+          team_id: nextMembership?.team_id ?? null,
+          role: nextMembership?.role ?? 'member',
+        })
+        .eq('id', member_id)
+        .eq('team_id', teamId); // only update if this was their active team
+    }
+  }
 
   // Delete event_types belonging to this team
   await supabase

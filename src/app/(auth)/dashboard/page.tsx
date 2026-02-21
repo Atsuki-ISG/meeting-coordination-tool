@@ -112,7 +112,7 @@ export default function DashboardPage() {
           </header>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-10">
             {/* Event Types Count */}
             <div className="relative group p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
               <div className="relative z-10">
@@ -124,7 +124,7 @@ export default function DashboardPage() {
                 <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-4xl font-bold text-slate-900 tracking-tighter">{eventTypes.length}</span>
                 </div>
-                <p className="text-sm font-medium text-slate-500">予約メニュー</p>
+                <p className="text-sm font-medium text-slate-500">予約タイプ</p>
               </div>
             </div>
 
@@ -167,7 +167,7 @@ export default function DashboardPage() {
             <div className="bg-white rounded-2xl md:rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100">
               <div className="p-4 md:p-8 border-b border-slate-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-lg text-slate-900">予約メニュー</h3>
+                  <h3 className="font-bold text-lg text-slate-900">予約タイプ</h3>
                   <Link href="/event-types" className="text-sm text-brand-500 font-semibold hover:text-brand-600 transition">
                     すべて表示 →
                   </Link>
@@ -181,10 +181,10 @@ export default function DashboardPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
-                    <p className="text-slate-500">予約メニューがまだありません</p>
+                    <p className="text-slate-500">予約タイプがまだありません</p>
                     <Link href="/event-types/new">
                       <Button variant="outline" className="mt-4">
-                        最初のイベントを作成
+                        最初の予約タイプを作成
                       </Button>
                     </Link>
                   </div>

@@ -78,6 +78,16 @@ const createEventTypeSchema = z.object({
   description: z.string().optional(),
   durationMinutes: z.union([z.string(), z.number()]).transform((val) => Number(val)),
   memberIds: z.array(z.string().uuid()).optional(),
+  participationMode: z.enum(['all_required', 'any_available']).optional(),
+  includeNoteTakers: z.boolean().optional(),
+  calendarTitleTemplate: z.string().optional(),
+  timeRestrictionType: z.enum(['none', 'preset', 'custom']).optional(),
+  timeRestrictionPresetId: z.string().uuid().optional().nullable(),
+  timeRestrictionCustom: z.object({
+    days: z.array(z.number().min(0).max(6)),
+    start_time: z.string().regex(/^\d{2}:\d{2}$/),
+    end_time: z.string().regex(/^\d{2}:\d{2}$/),
+  }).optional().nullable(),
 });
 
 export async function POST(request: NextRequest) {
@@ -118,6 +128,12 @@ export async function POST(request: NextRequest) {
         title: validatedData.title,
         description: validatedData.description || null,
         duration_minutes: validatedData.durationMinutes,
+        participation_mode: validatedData.participationMode || 'all_required',
+        include_note_takers: validatedData.includeNoteTakers ?? false,
+        calendar_title_template: validatedData.calendarTitleTemplate || '{メニュー名} - {予約者名}',
+        time_restriction_type: validatedData.timeRestrictionType || 'none',
+        time_restriction_preset_id: validatedData.timeRestrictionPresetId || null,
+        time_restriction_custom: validatedData.timeRestrictionCustom || null,
         slug,
         organizer_id: user.memberId,
         team_id: user.teamId,

@@ -24,7 +24,7 @@ export async function GET() {
   // Only get members in the same team
   const { data, error } = await supabase
     .from('members')
-    .select('id, name, email, is_active, role')
+    .select('id, name, email, is_active, role, is_note_taker')
     .eq('team_id', user.teamId)
     .eq('is_active', true)
     .not('google_refresh_token', 'is', null)

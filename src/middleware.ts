@@ -104,11 +104,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Handle team page - redirect to dashboard if user already has a team
-  if (isAuthenticated && isActive && pathname.startsWith('/team') && hasTeam) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
   // Redirect unauthenticated users to login for protected routes
   if (!isAuthenticated && protectedRoutes.some((route) => pathname.startsWith(route))) {
     return NextResponse.redirect(new URL('/login', request.url));

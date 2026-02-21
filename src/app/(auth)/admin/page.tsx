@@ -228,7 +228,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div>
-                    <p className="font-bold text-slate-900">メンテナンスモード</p>
+                    <p className="font-bold text-slate-900">メンテナンス</p>
                     <p className="text-sm text-slate-500">
                       {settings?.maintenanceMode.enabled
                         ? '外部ユーザーはサービスを利用できません'
@@ -263,7 +263,7 @@ export default function AdminPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <p className="text-sm text-amber-800">
-                    メンテナンスモードが有効です。外部ユーザーは新しい予約を作成できません。
+                    メンテナンスが有効です。外部ユーザーは新しい予約を作成できません。
                   </p>
                 </div>
               )}
@@ -445,7 +445,7 @@ export default function AdminPage() {
           {/* Usage Statistics */}
           <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 mb-8">
             <div className="p-8 border-b border-slate-100">
-              <h3 className="font-bold text-lg text-slate-900">API使用状況 - {currentMonth}</h3>
+              <h3 className="font-bold text-lg text-slate-900">利用状況 - {currentMonth}</h3>
             </div>
             <div className="p-8">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -490,7 +490,7 @@ export default function AdminPage() {
                     <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    各空き状況確認でメンバーごとにGoogle Calendar FreeBusy APIを1回呼び出します
+                    空き状況の確認ごとにメンバー1人あたりGoogleカレンダーへ1回問い合わせます
                   </li>
                   <li className="flex items-start gap-2">
                     <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,7 +502,7 @@ export default function AdminPage() {
                     <svg className="w-4 h-4 text-slate-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
-                    Google Calendar API無料枠: 1日100万クエリ
+                    Googleカレンダーの無料枠: 1日100万リクエスト
                   </li>
                 </ul>
               </div>

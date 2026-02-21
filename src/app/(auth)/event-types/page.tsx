@@ -9,6 +9,8 @@ export default function EventTypesPage() {
   const [eventTypes, setEventTypes] = useState<EventType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventTypes = async () => {
@@ -25,7 +27,21 @@ export default function EventTypesPage() {
       }
     };
 
+    const fetchCurrentUser = async () => {
+      try {
+        const res = await fetch('/api/teams');
+        if (res.ok) {
+          const data = await res.json();
+          setCurrentMemberId(data.memberId ?? null);
+          setCurrentRole(data.role ?? null);
+        }
+      } catch (error) {
+        console.error('Failed to fetch user info:', error);
+      }
+    };
+
     fetchEventTypes();
+    fetchCurrentUser();
   }, []);
 
   const copyBookingLink = async (id: string, slug: string) => {
@@ -74,8 +90,8 @@ export default function EventTypesPage() {
           {/* Header */}
           <header className="sticky top-0 -mx-4 md:-mx-10 px-4 md:px-10 py-4 md:py-6 bg-slate-50/80 backdrop-blur-md z-20 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6 md:mb-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight mb-1">予約メニュー</h1>
-              <p className="text-sm md:text-base text-slate-500 font-medium">予約可能なイベントを管理</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight mb-1">予約タイプ</h1>
+              <p className="text-sm md:text-base text-slate-500 font-medium">予約タイプの作成・管理</p>
             </div>
             <Link href="/event-types/new" className="self-start sm:self-auto">
               <button className="flex items-center gap-2 px-5 md:px-6 py-3 md:py-3.5 rounded-full text-white font-bold text-sm shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95 bg-gradient-to-r from-brand-500 to-brand-600">
@@ -95,11 +111,11 @@ export default function EventTypesPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-slate-900 mb-2">予約メニューがまだありません</h3>
-              <p className="text-slate-500 mb-6">最初の予約メニューを作成して、予約の受付を始めましょう。</p>
+              <h3 className="text-lg font-bold text-slate-900 mb-2">予約タイプがまだありません</h3>
+              <p className="text-slate-500 mb-6">最初の予約タイプを作成して、予約の受付を始めましょう。</p>
               <Link href="/event-types/new">
                 <button className="px-6 py-3 rounded-full text-white font-bold text-sm shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95 bg-gradient-to-r from-brand-500 to-brand-600">
-                  最初の予約メニューを作成
+                  最初の予約タイプを作成
                 </button>
               </Link>
             </div>
@@ -131,7 +147,7 @@ export default function EventTypesPage() {
                               : 'bg-slate-100 text-slate-600'
                           }`}>
                             <span className={`w-1.5 h-1.5 rounded-full ${eventType.is_active ? 'bg-green-500' : 'bg-slate-400'}`} />
-                            {eventType.is_active ? '公開中' : '非公開'}
+                            {eventType.is_active ? '募集中' : '募集停止'}
                           </span>
                         </div>
                       </div>
@@ -168,17 +184,19 @@ export default function EventTypesPage() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
-                          <span className="hidden sm:inline">プレビュー</span>
+                          <span className="hidden sm:inline">予約ページを表示</span>
                         </button>
                       </Link>
-                      <Link href={`/event-types/${eventType.id}`}>
-                        <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-700 text-xs md:text-sm font-semibold hover:border-brand-500 hover:text-brand-600 transition-all">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                          <span className="hidden sm:inline">編集</span>
-                        </button>
-                      </Link>
+                      {(currentRole === 'admin' || eventType.organizer_id === currentMemberId) && (
+                        <Link href={`/event-types/${eventType.id}`}>
+                          <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-700 text-xs md:text-sm font-semibold hover:border-brand-500 hover:text-brand-600 transition-all">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span className="hidden sm:inline">編集</span>
+                          </button>
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

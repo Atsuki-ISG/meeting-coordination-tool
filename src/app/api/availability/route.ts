@@ -13,7 +13,7 @@ import {
   getClientIp,
   invalidateMonthlyCache,
 } from '@/lib/rate-limit';
-import type { BusySlot, Member, WeeklyAvailability } from '@/types';
+import type { BusySlot, Member, WeeklyAvailability, TimeRestrictionCustom } from '@/types';
 import { DEFAULT_AVAILABILITY } from '@/types';
 
 export async function GET(request: NextRequest) {
@@ -63,6 +63,27 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get time restriction based on event type settings
+    let timeRestriction: TimeRestrictionCustom | null = null;
+
+    if (eventType.time_restriction_type === 'preset' && eventType.time_restriction_preset_id) {
+      const { data: preset } = await supabase
+        .from('time_slot_presets')
+        .select('days, start_time, end_time')
+        .eq('id', eventType.time_restriction_preset_id)
+        .single();
+
+      if (preset) {
+        timeRestriction = {
+          days: preset.days,
+          start_time: preset.start_time,
+          end_time: preset.end_time,
+        };
+      }
+    } else if (eventType.time_restriction_type === 'custom' && eventType.time_restriction_custom) {
+      timeRestriction = eventType.time_restriction_custom as TimeRestrictionCustom;
+    }
+
     // Get event type members
     const { data: eventTypeMembers } = await supabase
       .from('event_type_members')
@@ -75,12 +96,13 @@ export async function GET(request: NextRequest) {
       memberIds.push(eventType.organizer_id);
     }
 
-    // Get members with calendar access
+    // Get members with calendar access (exclude note takers from availability calculation)
     const { data: members } = await supabase
       .from('members')
       .select('*')
       .in('id', memberIds)
       .eq('is_active', true)
+      .eq('is_note_taker', false)
       .not('google_refresh_token', 'is', null);
 
     if (!members || members.length === 0) {
@@ -124,11 +146,14 @@ export async function GET(request: NextRequest) {
       organizer.availability_settings || DEFAULT_AVAILABILITY;
 
     // Calculate available slots
+    const participationMode = eventType.participation_mode || 'all_required';
     const availableSlots = calculateAvailability(
       busySlotsArrays,
       { start: timeMin, end: timeMax },
       eventType.duration_minutes,
-      { weeklyAvailability }
+      { weeklyAvailability },
+      participationMode as 'all_required' | 'any_available',
+      timeRestriction
     );
 
     // Log API usage

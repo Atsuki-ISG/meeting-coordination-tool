@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MeetFlow
 
-## Getting Started
+チーム向けの予約調整ツール。Google カレンダーと連携し、空き時間を自動計算して外部ユーザーが予約できる仕組みを提供します。
 
-First, run the development server:
+## 機能
+
+- **予約メニュー管理** — 所要時間・参加メンバー・URL スラッグを設定した予約メニューを作成
+- **空き時間の自動計算** — チームメンバーの Google カレンダーと可用性設定をもとに空き枠を算出
+- **外部向け予約ページ** — ログイン不要の公開 URL からゲストが日時を選択・予約
+- **チーム管理** — 招待コードでメンバーを追加、ロール管理（管理者 / メンバー）、議事録担当の設定
+- **Google カレンダー連携** — 予約確定時にカレンダーイベントを自動作成
+
+## 技術スタック
+
+- **フレームワーク**: Next.js 15 (App Router)
+- **データベース**: Supabase (PostgreSQL)
+- **認証**: Google OAuth
+- **スタイリング**: Tailwind CSS
+- **デプロイ**: Google Cloud Run
+
+## ローカル開発
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000) を開く。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+環境変数は `.env.local` に設定（`.env.example` を参照）。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## デプロイ
 
-## Learn More
+```bash
+gcloud run deploy meetflow --source . --region asia-northeast1 --allow-unauthenticated
+```
 
-To learn more about Next.js, take a look at the following resources:
+本番 URL: `https://meetflow-958232880627.asia-northeast1.run.app`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ページ構成
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| パス | 説明 |
+|---|---|
+| `/dashboard` | 予約メニューと直近の予約の概要 |
+| `/event-types` | 予約メニューの一覧・作成・編集 |
+| `/bookings` | 予約一覧 |
+| `/settings` | 個人の可用性設定（曜日・時間帯） |
+| `/settings/team` | チーム設定・メンバー管理 |
+| `/admin` | システム管理（システム管理者のみ） |
+| `/book/[slug]` | 外部向け予約ページ（ログイン不要） |

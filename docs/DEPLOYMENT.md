@@ -230,7 +230,7 @@ Vercelダッシュボード → Settings → Environment Variables に上記の�
 ### 1. 変更をコミット＆プッシュ
 
 ```bash
-cd ~/Claude/meetflow
+cd ~/Claude/meeting-coordination-tool
 git add -A
 git commit -m "変更内容の説明"
 git push origin main

@@ -1,6 +1,7 @@
 // Availability settings types
 export interface DayAvailability {
   enabled: boolean;
+  allDay?: boolean;  // If true, no time restriction (full day, minus Google Calendar conflicts)
   startTime: string; // "09:00"
   endTime: string;   // "18:00"
 }
@@ -34,6 +35,7 @@ export interface Member {
   role: 'admin' | 'member';
   status: MemberStatus;
   is_system_admin: boolean;
+  is_note_taker: boolean;
   team_id: string | null;
   created_at: string;
   updated_at: string;
@@ -63,6 +65,24 @@ export interface MemberRequest {
   updated_at: string;
 }
 
+export interface TimeSlotPreset {
+  id: string;
+  team_id: string;
+  name: string;
+  days: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
+  start_time: string; // HH:MM format
+  end_time: string; // HH:MM format
+  color?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TimeRestrictionCustom {
+  days: number[];
+  start_time: string;
+  end_time: string;
+}
+
 export interface EventType {
   id: string;
   slug: string;
@@ -71,6 +91,12 @@ export interface EventType {
   duration_minutes: 15 | 30 | 45 | 60;
   organizer_id: string;
   is_active: boolean;
+  participation_mode: 'all_required' | 'any_available';
+  include_note_takers: boolean;
+  calendar_title_template: string;
+  time_restriction_type: 'none' | 'preset' | 'custom';
+  time_restriction_preset_id: string | null;
+  time_restriction_custom: TimeRestrictionCustom | null;
   created_at: string;
 }
 
@@ -87,6 +113,7 @@ export interface Booking {
   end_at: string;
   requester_name: string;
   requester_email: string;
+  company_name: string | null;
   note: string | null;
   cancel_token_hash: string | null;
   status: 'confirmed' | 'canceled';
@@ -127,6 +154,7 @@ export interface DateRange {
 export interface BookingFormData {
   name: string;
   email: string;
+  companyName?: string;
   note?: string;
   slot: TimeSlot;
 }

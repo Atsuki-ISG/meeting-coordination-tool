@@ -73,7 +73,10 @@ Supabase SQL Editor で以下のファイルを順番に実行：
 2. `supabase/migrations/002_availability_settings.sql`
 3. `supabase/migrations/003_teams.sql`
 4. `supabase/migrations/004_member_roles.sql`
-5. `supabase/migrations/005_system_admin.sql`
+5. `supabase/migrations/005_member_approval.sql`
+6. `supabase/migrations/005_system_admin.sql`
+7. `supabase/migrations/006_fix_team_creator_role.sql`
+8. `supabase/migrations/007_participation_mode.sql`
 
 ### 4.3 API設定の取得
 
@@ -227,7 +230,7 @@ openssl rand -hex 32  # 64文字のhex文字列が出力される
 - [ ] `npm install` 完了
 - [ ] `.env.local` 作成済み
 - [ ] Supabaseプロジェクト作成済み
-- [ ] DBマイグレーション実行済み（5ファイル全て）
+- [ ] DBマイグレーション実行済み（8ファイル全て）
 - [ ] Google Cloud プロジェクト作成済み
 - [ ] Calendar API 有効化済み
 - [ ] OAuth クライアントID 作成済み

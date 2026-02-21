@@ -183,12 +183,13 @@ export default function MemberRequestsPage() {
       {/* Requests List */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-slate-500">読み込み中...</div>
+          <div className="p-8 text-center text-slate-600">読み込み中...</div>
         ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">
+          <div className="p-8 text-center text-slate-600">
             {activeTab === 'pending' ? '承認待ちの申請はありません' : '申請がありません'}
           </div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
@@ -262,6 +263,7 @@ export default function MemberRequestsPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

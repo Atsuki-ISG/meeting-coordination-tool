@@ -10,6 +10,7 @@ import type { TimeSlot } from '@/types';
 const bookingSchema = z.object({
   name: z.string().min(1, 'お名前を入力してください'),
   email: z.string().email('有効なメールアドレスを入力してください'),
+  companyName: z.string().optional(),
   note: z.string().min(1, 'ご相談内容・備考を入力してください'),
 });
 
@@ -86,6 +87,19 @@ export function BookingForm({
           {errors.email && (
             <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
           )}
+        </div>
+
+        {/* Company Name */}
+        <div>
+          <label className="block text-sm font-semibold text-slate-700 mb-2">
+            会社名（任意）
+          </label>
+          <input
+            type="text"
+            {...register('companyName')}
+            placeholder="株式会社〇〇"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+          />
         </div>
 
         {/* Note */}

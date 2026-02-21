@@ -24,20 +24,6 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createServiceClient();
 
-    // Check if user already belongs to a team
-    const { data: existingMember } = await supabase
-      .from('members')
-      .select('team_id')
-      .eq('id', user.memberId)
-      .single();
-
-    if (existingMember?.team_id) {
-      return NextResponse.json(
-        { error: 'Already belongs to a team' },
-        { status: 400 }
-      );
-    }
-
     // Find team by invite code (case insensitive)
     const { data: team, error: teamError } = await supabase
       .from('teams')
@@ -52,19 +38,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update member with team_id
-    const { error: updateError } = await supabase
-      .from('members')
-      .update({ team_id: team.id })
-      .eq('id', user.memberId);
+    // Check if already a member of this team
+    const { data: existing } = await supabase
+      .from('team_memberships')
+      .select('id')
+      .eq('member_id', user.memberId)
+      .eq('team_id', team.id)
+      .single();
 
-    if (updateError) {
-      console.error('Failed to join team:', updateError);
+    if (existing) {
+      return NextResponse.json(
+        { error: 'Already a member of this team' },
+        { status: 400 }
+      );
+    }
+
+    // Add to team_memberships
+    const { error: membershipError } = await supabase
+      .from('team_memberships')
+      .insert({ member_id: user.memberId, team_id: team.id, role: 'member' });
+
+    if (membershipError) {
+      console.error('Failed to join team:', membershipError);
       return NextResponse.json(
         { error: 'Failed to join team' },
         { status: 500 }
       );
     }
+
+    // Switch active team
+    await supabase
+      .from('members')
+      .update({ team_id: team.id, role: 'member' })
+      .eq('id', user.memberId);
 
     // Update session with team_id
     await createSession({

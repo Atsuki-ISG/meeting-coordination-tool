@@ -89,6 +89,7 @@ const createBookingSchema = z.object({
   endAt: z.string().datetime(),
   name: z.string().min(1),
   email: z.string().email(),
+  companyName: z.string().optional(),
   note: z.string().min(1, 'ご相談内容・備考は必須です'),
 });
 
@@ -157,6 +158,19 @@ export async function POST(request: NextRequest) {
       memberIds.push(eventType.organizer_id);
     }
 
+    // Get note-taker emails only if this event type opts in
+    let noteTakerEmails: string[] = [];
+    if (eventType.include_note_takers) {
+      const { data: noteTakers } = await supabase
+        .from('members')
+        .select('email')
+        .eq('is_active', true)
+        .eq('team_id', eventType.team_id)
+        .eq('is_note_taker', true)
+        .not('google_refresh_token', 'is', null);
+      noteTakerEmails = (noteTakers || []).map((m) => m.email);
+    }
+
     const { data: members } = await supabase
       .from('members')
       .select('*')
@@ -218,21 +232,61 @@ export async function POST(request: NextRequest) {
     );
     const calendar = createCalendarClient(accessToken);
 
-    // Create calendar event with Google Meet
-    const attendeeEmails = [
+    // --- イベント1: チーム内部用（備考・会社名含む）---
+    const internalAttendees = [
       ...members.map((m) => m.email),
-      validatedData.email,
+      ...noteTakerEmails.filter((e) => !members.some((m) => m.email === e)),
     ];
 
+    const companyLine = validatedData.companyName
+      ? `\n【会社名】\n${validatedData.companyName}`
+      : '';
+
+    // Generate calendar title from template (supports both Japanese and legacy English variables)
+    const calendarTitle = (eventType.calendar_title_template || '{メニュー名} - {予約者名}')
+      .replace('{予約者名}', validatedData.name)
+      .replace('{メール}', validatedData.email)
+      .replace('{メニュー名}', eventType.title)
+      .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
+      .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
+      .replace('{備考}', validatedData.note.substring(0, 50))
+      // Legacy English variables for backward compatibility
+      .replace('{guest_name}', validatedData.name)
+      .replace('{guest_email}', validatedData.email)
+      .replace('{event_type}', eventType.title)
+      .replace('{date}', slot.start.toLocaleDateString('ja-JP'))
+      .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
+      .replace('{notes}', validatedData.note.substring(0, 50));
+
     const { eventId: googleEventId, meetLink } = await createCalendarEvent(calendar, {
-      summary: `${eventType.title} - ${validatedData.name}`,
-      description: `${validatedData.name} 様からのご予約\n\n【ご相談内容・備考】\n${validatedData.note}`,
+      summary: calendarTitle,
+      description: `${validatedData.name} 様からのご予約${companyLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
       start: slot.start,
       end: slot.end,
-      attendees: attendeeEmails,
+      attendees: internalAttendees,
       organizerEmail: organizer.email,
       addMeetLink: true,
     });
+
+    // --- イベント2: ゲスト用（備考なし、Meet リンクのみ）---
+    const guestDescription = meetLink
+      ? `Google Meet: ${meetLink}`
+      : undefined;
+
+    try {
+      await createCalendarEvent(calendar, {
+        summary: eventType.title,
+        description: guestDescription,
+        start: slot.start,
+        end: slot.end,
+        attendees: [validatedData.email],
+        organizerEmail: organizer.email,
+        addMeetLink: false,
+      });
+    } catch (err) {
+      console.error('Failed to create guest calendar event:', err);
+      // ゲスト用イベントの失敗は予約全体を止めない
+    }
 
     // Generate cancel token
     const cancelToken = generateToken();
@@ -248,6 +302,7 @@ export async function POST(request: NextRequest) {
         end_at: validatedData.endAt,
         requester_name: validatedData.name,
         requester_email: validatedData.email,
+        company_name: validatedData.companyName || null,
         note: validatedData.note,
         cancel_token_hash: cancelTokenHash,
         status: 'confirmed',

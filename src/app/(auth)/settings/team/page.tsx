@@ -5,11 +5,24 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/sidebar';
 import type { Member, Team } from '@/types';
 
+interface TimeSlotPreset {
+  id: string;
+  team_id: string;
+  name: string;
+  days: number[];
+  start_time: string;
+  end_time: string;
+  color?: string;
+}
+
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
+
 export default function TeamSettingsPage() {
   const router = useRouter();
   const [team, setTeam] = useState<Team | null>(null);
   const [role, setRole] = useState<'admin' | 'member' | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -24,10 +37,19 @@ export default function TeamSettingsPage() {
   // Member management states
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [changingRoleId, setChangingRoleId] = useState<string | null>(null);
+  const [togglingNoteTakerId, setTogglingNoteTakerId] = useState<string | null>(null);
 
   // Delete team states
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeletingTeam, setIsDeletingTeam] = useState(false);
+
+  // Time slot presets
+  const [presets, setPresets] = useState<TimeSlotPreset[]>([]);
+  const [showPresetForm, setShowPresetForm] = useState(false);
+  const [editingPreset, setEditingPreset] = useState<TimeSlotPreset | null>(null);
+  const [presetForm, setPresetForm] = useState({ name: '', days: [1, 2, 3, 4, 5], start_time: '09:00', end_time: '17:00' });
+  const [isSavingPreset, setIsSavingPreset] = useState(false);
+  const [deletingPresetId, setDeletingPresetId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -35,9 +57,10 @@ export default function TeamSettingsPage() {
 
   const fetchData = async () => {
     try {
-      const [teamRes, membersRes] = await Promise.all([
+      const [teamRes, membersRes, presetsRes] = await Promise.all([
         fetch('/api/teams'),
         fetch('/api/members'),
+        fetch('/api/time-slot-presets'),
       ]);
 
       if (teamRes.ok) {
@@ -45,11 +68,17 @@ export default function TeamSettingsPage() {
         setTeam(data.team);
         setRole(data.role);
         setTeamName(data.team?.name || '');
+        setCurrentMemberId(data.memberId || null);
       }
 
       if (membersRes.ok) {
         const data = await membersRes.json();
         setMembers(data);
+      }
+
+      if (presetsRes.ok) {
+        const data = await presetsRes.json();
+        setPresets(data);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -118,6 +147,31 @@ export default function TeamSettingsPage() {
     }
   };
 
+  const toggleNoteTaker = async (memberId: string, current: boolean) => {
+    setTogglingNoteTakerId(memberId);
+    try {
+      const res = await fetch(`/api/teams/members/${memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isNoteTaker: !current }),
+      });
+
+      if (res.ok) {
+        setMembers((prev) =>
+          prev.map((m) => (m.id === memberId ? { ...m, is_note_taker: !current } : m))
+        );
+        setMessage({ type: 'success', text: 'メモ取り担当を更新しました' });
+      } else {
+        const error = await res.json();
+        setMessage({ type: 'error', text: error.error || '更新に失敗しました' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: '更新に失敗しました' });
+    } finally {
+      setTogglingNoteTakerId(null);
+    }
+  };
+
   const removeMember = async (memberId: string) => {
     setRemovingMemberId(memberId);
     try {
@@ -157,15 +211,99 @@ export default function TeamSettingsPage() {
     }
   };
 
+  const openNewPresetForm = () => {
+    setEditingPreset(null);
+    setPresetForm({ name: '', days: [1, 2, 3, 4, 5], start_time: '09:00', end_time: '17:00' });
+    setShowPresetForm(true);
+  };
+
+  const openEditPresetForm = (preset: TimeSlotPreset) => {
+    setEditingPreset(preset);
+    setPresetForm({ name: preset.name, days: [...preset.days], start_time: preset.start_time, end_time: preset.end_time });
+    setShowPresetForm(true);
+  };
+
+  const savePreset = async () => {
+    if (!presetForm.name.trim() || presetForm.days.length === 0) return;
+    setIsSavingPreset(true);
+    try {
+      const url = editingPreset ? `/api/time-slot-presets/${editingPreset.id}` : '/api/time-slot-presets';
+      const method = editingPreset ? 'PATCH' : 'POST';
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(presetForm),
+      });
+      if (res.ok) {
+        const saved = await res.json();
+        if (editingPreset) {
+          setPresets((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
+        } else {
+          setPresets((prev) => [...prev, saved]);
+        }
+        setShowPresetForm(false);
+        setMessage({ type: 'success', text: `テンプレートを${editingPreset ? '更新' : '作成'}しました` });
+      } else {
+        const error = await res.json();
+        setMessage({ type: 'error', text: error.error || 'テンプレートの保存に失敗しました' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'テンプレートの保存に失敗しました' });
+    } finally {
+      setIsSavingPreset(false);
+    }
+  };
+
+  const deletePreset = async (id: string) => {
+    setDeletingPresetId(id);
+    try {
+      const res = await fetch(`/api/time-slot-presets/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setPresets((prev) => prev.filter((p) => p.id !== id));
+        setMessage({ type: 'success', text: 'テンプレートを削除しました' });
+      } else {
+        const error = await res.json();
+        setMessage({ type: 'error', text: error.error || 'テンプレートの削除に失敗しました' });
+      }
+    } catch {
+      setMessage({ type: 'error', text: 'テンプレートの削除に失敗しました' });
+    } finally {
+      setDeletingPresetId(null);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <svg className="h-8 w-8 animate-spin text-brand-500" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          <p className="text-sm text-slate-500">読み込み中...</p>
+      <div className="min-h-screen bg-slate-50">
+        <div className="flex">
+          <Sidebar />
+          <main className="flex-1 md:ml-72 p-4 pt-20 md:p-10 md:pt-10">
+            <header className="sticky top-0 -mx-10 px-10 py-6 bg-slate-50/80 backdrop-blur-md z-20 mb-8">
+              <div className="h-8 w-40 bg-slate-200 rounded-lg animate-pulse" />
+              <div className="h-4 w-32 bg-slate-100 rounded mt-2 animate-pulse" />
+            </header>
+            <div className="bg-white rounded-3xl border border-slate-100 p-8 mb-8 animate-pulse">
+              <div className="h-5 w-24 bg-slate-200 rounded mb-6" />
+              <div className="h-8 w-48 bg-slate-200 rounded" />
+            </div>
+            <div className="bg-white rounded-3xl border border-slate-100 mb-8">
+              <div className="p-8 border-b border-slate-100">
+                <div className="h-5 w-32 bg-slate-200 rounded animate-pulse" />
+              </div>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-6 border-b border-slate-100 animate-pulse">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-200" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-slate-200 rounded w-1/4" />
+                      <div className="h-3 bg-slate-200 rounded w-1/3" />
+                    </div>
+                    <div className="h-8 bg-slate-200 rounded-lg w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
         </div>
       </div>
     );
@@ -192,7 +330,7 @@ export default function TeamSettingsPage() {
           {/* Header */}
           <header className="sticky top-0 -mx-10 px-10 py-6 bg-slate-50/80 backdrop-blur-md z-20 mb-8">
             <div>
-              <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">チーム管理</h1>
+              <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">チーム設定</h1>
               <p className="text-slate-500 font-medium">チームの設定とメンバーを管理</p>
             </div>
           </header>
@@ -366,19 +504,52 @@ export default function TeamSettingsPage() {
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-semibold text-slate-900">{member.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-slate-900">{member.name}</p>
+                          {member.is_note_taker && (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                              メモ取り担当
+                            </span>
+                          )}
+                          {member.google_refresh_token ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              Google連携済み
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-600">
+                              Google未連携
+                            </span>
+                          )}
+                        </div>
                         <p className="text-sm text-slate-500">{member.email}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
+                      {(isAdmin || member.id === currentMemberId) && (
+                        <button
+                          onClick={() => toggleNoteTaker(member.id, member.is_note_taker)}
+                          disabled={togglingNoteTakerId === member.id}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition disabled:opacity-50 ${
+                            member.is_note_taker
+                              ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          }`}
+                          aria-label={`${member.name}のメモ取り担当を${member.is_note_taker ? '外す' : '設定する'}`}
+                        >
+                          {member.is_note_taker ? 'メモ取り担当を外す' : 'メモ取り担当にする'}
+                        </button>
+                      )}
                       {isAdmin ? (
                         <>
                           <select
                             value={member.role}
                             onChange={(e) => changeRole(member.id, e.target.value as 'admin' | 'member')}
                             disabled={changingRoleId === member.id}
-                            className="px-4 py-2 border-2 border-slate-200 rounded-xl bg-white font-medium text-sm focus:border-brand-500 focus:outline-none disabled:opacity-50"
+                            className="px-4 py-2 border-2 border-slate-300 rounded-xl bg-white font-medium text-sm text-slate-800 focus:border-brand-500 focus:outline-none disabled:opacity-50"
                           >
                             <option value="admin">管理者</option>
                             <option value="member">メンバー</option>
@@ -387,15 +558,15 @@ export default function TeamSettingsPage() {
                             onClick={() => removeMember(member.id)}
                             disabled={removingMemberId === member.id}
                             className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition disabled:opacity-50"
-                            title="チームから削除"
+                            aria-label={`${member.name}をチームから削除`}
                           >
                             {removingMemberId === member.id ? (
-                              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <svg aria-hidden="true" className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                               </svg>
                             ) : (
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                               </svg>
                             )}
@@ -417,6 +588,178 @@ export default function TeamSettingsPage() {
             </div>
           </div>
 
+          {/* Time Slot Presets */}
+          <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 mb-8">
+            <div className="p-8 border-b border-slate-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-lg text-slate-900">時間帯テンプレート</h3>
+                  <p className="text-sm text-slate-500 mt-1">予約タイプに適用できる時間帯の制限を管理</p>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={openNewPresetForm}
+                    className="px-4 py-2 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition text-sm"
+                  >
+                    + 新規作成
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {presets.length === 0 ? (
+              <div className="p-8 text-center text-slate-500">
+                テンプレートはまだありません
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {presets.map((preset) => (
+                  <div key={preset.id} className="p-6 hover:bg-slate-50/50 transition">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold text-slate-900">{preset.name}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                          <div className="flex gap-1">
+                            {DAY_LABELS.map((label, i) => (
+                              <span
+                                key={i}
+                                className={`w-7 h-7 rounded text-xs font-bold flex items-center justify-center ${
+                                  preset.days.includes(i)
+                                    ? 'bg-brand-100 text-brand-700'
+                                    : 'bg-slate-50 text-slate-300'
+                                }`}
+                              >
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                          <span className="text-sm text-slate-600">
+                            {preset.start_time}〜{preset.end_time}
+                          </span>
+                        </div>
+                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEditPresetForm(preset)}
+                            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deletePreset(preset.id)}
+                            disabled={deletingPresetId === preset.id}
+                            className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
+                          >
+                            {deletingPresetId === preset.id ? (
+                              <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Preset Form Modal */}
+          {showPresetForm && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full mx-2 sm:mx-4 shadow-2xl">
+                <h3 className="text-xl font-bold text-slate-900 mb-6">
+                  {editingPreset ? 'テンプレートを編集' : 'テンプレートを作成'}
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">名前</label>
+                    <input
+                      type="text"
+                      value={presetForm.name}
+                      onChange={(e) => setPresetForm((prev) => ({ ...prev, name: e.target.value }))}
+                      placeholder="例: 平日午後のみ"
+                      className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none text-slate-900 placeholder-slate-400"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">曜日</label>
+                    <div className="flex gap-2">
+                      {DAY_LABELS.map((label, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => {
+                            setPresetForm((prev) => ({
+                              ...prev,
+                              days: prev.days.includes(i)
+                                ? prev.days.filter((d) => d !== i)
+                                : [...prev.days, i].sort(),
+                            }));
+                          }}
+                          className={`w-10 h-10 rounded-lg text-sm font-bold transition ${
+                            presetForm.days.includes(i)
+                              ? 'bg-brand-500 text-white'
+                              : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">時間帯</label>
+                    <div className="flex gap-3 items-center">
+                      <input
+                        type="time"
+                        value={presetForm.start_time}
+                        onChange={(e) => setPresetForm((prev) => ({ ...prev, start_time: e.target.value }))}
+                        className="flex-1 px-4 py-2 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-brand-500 focus:outline-none"
+                      />
+                      <span className="text-slate-500 font-medium">〜</span>
+                      <input
+                        type="time"
+                        value={presetForm.end_time}
+                        onChange={(e) => setPresetForm((prev) => ({ ...prev, end_time: e.target.value }))}
+                        className="flex-1 px-4 py-2 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-brand-500 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-8">
+                  <button
+                    onClick={() => setShowPresetForm(false)}
+                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition"
+                  >
+                    キャンセル
+                  </button>
+                  <button
+                    onClick={savePreset}
+                    disabled={isSavingPreset || !presetForm.name.trim() || presetForm.days.length === 0}
+                    className="flex-1 px-4 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition disabled:opacity-50"
+                  >
+                    {isSavingPreset ? '保存中...' : editingPreset ? '更新' : '作成'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Danger Zone (Admin only) */}
           {isAdmin && (
             <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-red-200">
@@ -428,7 +771,7 @@ export default function TeamSettingsPage() {
                   <div>
                     <p className="font-semibold text-slate-900">チームを削除</p>
                     <p className="text-sm text-slate-500 mt-1">
-                      チームと全ての予約メニューが削除されます。この操作は取り消せません。
+                      チームと全ての予約タイプが削除されます。この操作は取り消せません。
                     </p>
                   </div>
                   <button
@@ -445,7 +788,7 @@ export default function TeamSettingsPage() {
           {/* Delete Confirmation Modal */}
           {showDeleteConfirm && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl">
+              <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full mx-2 sm:mx-4 shadow-2xl">
                 <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
                   <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -455,7 +798,7 @@ export default function TeamSettingsPage() {
                   本当にチームを削除しますか？
                 </h3>
                 <p className="text-slate-500 text-center mb-8">
-                  「{team.name}」とすべての予約メニューが削除されます。メンバーはチームから外れます。
+                  「{team.name}」とすべての予約タイプが削除されます。メンバーはチームから外れます。
                 </p>
                 <div className="flex gap-3">
                   <button

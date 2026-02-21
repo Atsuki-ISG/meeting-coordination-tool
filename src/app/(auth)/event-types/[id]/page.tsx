@@ -13,7 +13,19 @@ interface Member {
   id: string;
   name: string;
   email: string;
+  is_note_taker: boolean;
 }
+
+interface TimeSlotPreset {
+  id: string;
+  name: string;
+  days: number[];
+  start_time: string;
+  end_time: string;
+  color?: string;
+}
+
+const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
 const eventTypeSchema = z.object({
   title: z.string().min(1, 'タイトルを入力してください'),
@@ -33,7 +45,14 @@ export default function EventTypeDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
+  const [participationMode, setParticipationMode] = useState<'all_required' | 'any_available'>('all_required');
+  const [includeNoteTakers, setIncludeNoteTakers] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [calendarTitleTemplate, setCalendarTitleTemplate] = useState('{メニュー名} - {予約者名}');
+  const [timeRestrictionType, setTimeRestrictionType] = useState<'none' | 'preset' | 'custom'>('none');
+  const [timeRestrictionPresetId, setTimeRestrictionPresetId] = useState<string | null>(null);
+  const [timeRestrictionCustom, setTimeRestrictionCustom] = useState({ days: [1, 2, 3, 4, 5], start_time: '09:00', end_time: '17:00' });
+  const [presets, setPresets] = useState<TimeSlotPreset[]>([]);
 
   const copyBookingLink = async () => {
     if (!eventType) return;
@@ -67,15 +86,24 @@ export default function EventTypeDetailPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventTypeRes, membersRes, eventTypeMembersRes] = await Promise.all([
+        const [eventTypeRes, membersRes, eventTypeMembersRes, presetsRes] = await Promise.all([
           fetch(`/api/event-types?id=${params.id}`),
           fetch('/api/members'),
           fetch(`/api/event-types/${params.id}/members`),
+          fetch('/api/time-slot-presets'),
         ]);
 
         if (eventTypeRes.ok) {
           const data = await eventTypeRes.json();
           setEventType(data);
+          setParticipationMode(data.participation_mode || 'all_required');
+          setIncludeNoteTakers(data.include_note_takers ?? false);
+          setCalendarTitleTemplate(data.calendar_title_template || '{メニュー名} - {予約者名}');
+          setTimeRestrictionType(data.time_restriction_type || 'none');
+          setTimeRestrictionPresetId(data.time_restriction_preset_id || null);
+          if (data.time_restriction_custom) {
+            setTimeRestrictionCustom(data.time_restriction_custom);
+          }
           reset({
             title: data.title,
             description: data.description || '',
@@ -92,6 +120,11 @@ export default function EventTypeDetailPage() {
         if (eventTypeMembersRes.ok) {
           const data = await eventTypeMembersRes.json();
           setSelectedMemberIds(data.map((m: { member_id: string }) => m.member_id));
+        }
+
+        if (presetsRes.ok) {
+          const data = await presetsRes.json();
+          setPresets(data);
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -115,6 +148,12 @@ export default function EventTypeDetailPage() {
           durationMinutes: Number(data.durationMinutes),
           isActive: data.isActive,
           memberIds: selectedMemberIds,
+          participationMode,
+          includeNoteTakers,
+          calendarTitleTemplate,
+          timeRestrictionType,
+          timeRestrictionPresetId: timeRestrictionType === 'preset' ? timeRestrictionPresetId : null,
+          timeRestrictionCustom: timeRestrictionType === 'custom' ? timeRestrictionCustom : null,
         }),
       });
 
@@ -133,7 +172,7 @@ export default function EventTypeDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('この予約メニューを削除しますか？この操作は取り消せません。')) {
+    if (!confirm('この予約タイプを削除しますか？この操作は取り消せません。')) {
       return;
     }
 
@@ -195,7 +234,7 @@ export default function EventTypeDetailPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 mb-2">予約メニューが見つかりません</h2>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">予約タイプが見つかりません</h2>
           <Link href="/event-types">
             <button className="mt-4 px-6 py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition">
               戻る
@@ -222,9 +261,9 @@ export default function EventTypeDetailPage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              予約メニュー一覧に戻る
+              予約タイプ一覧に戻る
             </Link>
-            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">予約メニューを編集</h1>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight">予約タイプを編集</h1>
           </header>
 
           <div className="max-w-2xl space-y-6">
@@ -290,16 +329,41 @@ export default function EventTypeDetailPage() {
                 </div>
 
                 {/* Members Selection */}
-                {members.length > 1 && (
+                {members.filter((m) => !m.is_note_taker).length > 1 && (
                   <div>
+                    {/* Participation Mode */}
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                      参加方式
+                    </label>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      {([
+                        { value: 'all_required', label: '全員参加', desc: '全員が空いている時間のみ表示' },
+                        { value: 'any_available', label: '誰か1名参加', desc: '1人でも空いていれば表示' },
+                      ] as const).map(({ value, label, desc }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setParticipationMode(value)}
+                          className={`flex flex-col items-start rounded-xl border-2 p-4 transition-all text-left ${
+                            participationMode === value
+                              ? 'border-brand-500 bg-brand-50'
+                              : 'border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          <span className={`font-semibold text-sm ${participationMode === value ? 'text-brand-700' : 'text-slate-700'}`}>{label}</span>
+                          <span className="text-xs text-slate-500 mt-0.5">{desc}</span>
+                        </button>
+                      ))}
+                    </div>
+
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       参加メンバー（複数選択可）
                     </label>
                     <p className="text-sm text-slate-500 mb-4">
-                      選択したメンバーのカレンダーをマージして空き時間を計算します
+                      選択したメンバーの予定から共通の空き時間を見つけます
                     </p>
                     <div className="space-y-2">
-                      {members.map((member) => (
+                      {members.filter((m) => !m.is_note_taker).map((member) => (
                         <label
                           key={member.id}
                           className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
@@ -334,6 +398,191 @@ export default function EventTypeDetailPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Note-takers */}
+                {members.some((m) => m.is_note_taker) && (
+                  <div className="flex items-center justify-between rounded-xl border-2 border-slate-200 p-4">
+                    <div>
+                      <p className="font-semibold text-sm text-slate-900">メモ取り担当者を自動招待</p>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        メモ取り担当に設定されたメンバーをカレンダー招待に自動で追加します
+                      </p>
+                    </div>
+                    <label className="flex items-center cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={includeNoteTakers}
+                          onChange={(e) => setIncludeNoteTakers(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+                      </div>
+                    </label>
+                  </div>
+                )}
+
+                {/* Calendar Title Template */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    カレンダータイトル
+                    <span className="ml-1 text-xs font-normal text-slate-400">チーム内部のみ・ゲストには表示されません</span>
+                  </label>
+                  <input
+                    id="calendarTitleTemplateEdit"
+                    type="text"
+                    value={calendarTitleTemplate}
+                    onChange={(e) => setCalendarTitleTemplate(e.target.value)}
+                    placeholder="{メニュー名} - {予約者名}"
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {([
+                      { var: '{予約者名}', label: '予約者名' },
+                      { var: '{メニュー名}', label: 'メニュー名' },
+                      { var: '{日付}', label: '日付' },
+                      { var: '{時刻}', label: '時刻' },
+                      { var: '{メール}', label: 'メール' },
+                      { var: '{備考}', label: '備考' },
+                    ] as const).map(({ var: v, label }) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => {
+                          const input = document.getElementById('calendarTitleTemplateEdit') as HTMLInputElement;
+                          const pos = input?.selectionStart ?? calendarTitleTemplate.length;
+                          setCalendarTitleTemplate(
+                            calendarTitleTemplate.slice(0, pos) + v + calendarTitleTemplate.slice(pos)
+                          );
+                          setTimeout(() => { input?.focus(); input?.setSelectionRange(pos + v.length, pos + v.length); }, 0);
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-600 text-xs font-medium border border-brand-200 hover:bg-brand-100 transition cursor-pointer"
+                      >
+                        + {label}
+                      </button>
+                    ))}
+                  </div>
+                  {calendarTitleTemplate && (
+                    <div className="mt-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                      <p className="text-xs text-slate-400 mb-1">プレビュー</p>
+                      <p className="text-sm font-medium text-slate-700">
+                        {calendarTitleTemplate
+                          .replace('{予約者名}', '山田太郎')
+                          .replace('{メール}', 'yamada@example.com')
+                          .replace('{メニュー名}', watch('title') || eventType?.title || '初回相談')
+                          .replace('{日付}', '2026/2/20')
+                          .replace('{時刻}', '14:00')
+                          .replace('{備考}', 'サービスについて相談')}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Time Restriction */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    予約を受け付ける時間帯
+                  </label>
+                  <div className="space-y-3">
+                    {([
+                      { value: 'none', label: 'すべての空き時間', desc: '設定ページの営業時間内で空いている時間をすべて表示' },
+                      { value: 'preset', label: 'テンプレートから選択', desc: 'チーム設定で作成した時間帯テンプレートを使う' },
+                      { value: 'custom', label: '曜日・時間を指定', desc: 'この予約タイプ専用に曜日と時間帯を絞り込む' },
+                    ] as const).map(({ value, label, desc }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setTimeRestrictionType(value)}
+                        className={`w-full flex items-start gap-3 rounded-xl border-2 p-4 transition-all text-left ${
+                          timeRestrictionType === value
+                            ? 'border-brand-500 bg-brand-50'
+                            : 'border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                          timeRestrictionType === value ? 'border-brand-500' : 'border-slate-300'
+                        }`}>
+                          {timeRestrictionType === value && (
+                            <div className="w-2 h-2 rounded-full bg-brand-500" />
+                          )}
+                        </div>
+                        <div>
+                          <span className={`font-semibold text-sm ${timeRestrictionType === value ? 'text-brand-700' : 'text-slate-700'}`}>{label}</span>
+                          <p className="text-xs text-slate-500 mt-0.5">{desc}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Preset selector */}
+                  {timeRestrictionType === 'preset' && (
+                    <div className="mt-3 pl-7">
+                      {presets.length === 0 ? (
+                        <p className="text-sm text-slate-500">テンプレートがありません。チーム設定から作成してください。</p>
+                      ) : (
+                        <select
+                          value={timeRestrictionPresetId || ''}
+                          onChange={(e) => setTimeRestrictionPresetId(e.target.value || null)}
+                          className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
+                        >
+                          <option value="">テンプレートを選択</option>
+                          {presets.map((preset) => (
+                            <option key={preset.id} value={preset.id}>
+                              {preset.name}（{preset.days.map((d) => DAY_LABELS[d]).join('・')}{preset.start_time}〜{preset.end_time}）
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Custom settings */}
+                  {timeRestrictionType === 'custom' && (
+                    <div className="mt-3 pl-7 space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-slate-600 mb-2">曜日</p>
+                        <div className="flex gap-2">
+                          {DAY_LABELS.map((label, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => {
+                                setTimeRestrictionCustom((prev) => ({
+                                  ...prev,
+                                  days: prev.days.includes(i)
+                                    ? prev.days.filter((d) => d !== i)
+                                    : [...prev.days, i].sort(),
+                                }));
+                              }}
+                              className={`w-10 h-10 rounded-lg text-sm font-bold transition ${
+                                timeRestrictionCustom.days.includes(i)
+                                  ? 'bg-brand-500 text-white'
+                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex gap-3 items-center">
+                        <input
+                          type="time"
+                          value={timeRestrictionCustom.start_time}
+                          onChange={(e) => setTimeRestrictionCustom((prev) => ({ ...prev, start_time: e.target.value }))}
+                          className="px-4 py-2 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-brand-500 focus:outline-none"
+                        />
+                        <span className="text-slate-500 font-medium">〜</span>
+                        <input
+                          type="time"
+                          value={timeRestrictionCustom.end_time}
+                          onChange={(e) => setTimeRestrictionCustom((prev) => ({ ...prev, end_time: e.target.value }))}
+                          className="px-4 py-2 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-brand-500 focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
 
                 {/* Active Toggle */}
                 <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50">
@@ -451,7 +700,7 @@ export default function EventTypeDetailPage() {
               <div className="p-8">
                 <h3 className="text-lg font-bold text-red-600 mb-2">危険な操作</h3>
                 <p className="text-sm text-slate-500 mb-4">
-                  この予約メニューを削除すると、関連する予約データも削除されます。この操作は取り消せません。
+                  この予約タイプを削除すると、関連する予約データも削除されます。この操作は取り消せません。
                 </p>
                 <button
                   onClick={handleDelete}
@@ -482,7 +731,7 @@ export default function EventTypeDetailPage() {
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      予約メニューを削除
+                      予約タイプを削除
                     </>
                   )}
                 </button>

@@ -126,8 +126,15 @@ function LoginContent() {
           </p>
         </div>
 
+        <div className="rounded-xl bg-amber-50 border border-amber-200 p-4">
+          <p className="text-amber-800 text-sm">
+            <strong>⚠️ 警告画面が表示された場合</strong><br />
+            「このアプリはGoogleで確認されていません」という画面が出た場合は、「詳細」→「（安全ではないページ）に移動」をクリックしてください。
+          </p>
+        </div>
+
         <p className="text-center text-xs text-gray-500">
-          ログインすると、Googleカレンダーとの連携に同意したものとみなされます。
+          ログインすると、Googleカレンダーとの連携に同意したものとします。
         </p>
       </CardContent>
     </Card>

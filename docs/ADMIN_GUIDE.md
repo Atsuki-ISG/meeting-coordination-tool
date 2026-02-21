@@ -10,7 +10,7 @@
 | API利用量 | 週1回 | `/admin` 画面 |
 | 予約状況 | 日次 | `/bookings` 画面 |
 | エラーログ | 日次 | Cloud Run コンソール |
-| メンバー状況 | 週1回 | `/members` 画面 |
+| メンバー状況 | 週1回 | `/settings/team` 画面 |
 
 ### 1.2 API利用量の目安
 
@@ -170,9 +170,9 @@ SELECT email, status, is_system_admin FROM members WHERE email = 'user@example.c
 **症状**: 予約ページで空き枠が出てこない
 
 **確認手順**:
-1. `/members` で対象メンバーが有効か確認
+1. `/settings/team` で対象メンバーのカレンダー連携状態を確認
 2. `/settings` で予約可能時間が設定されているか確認
-3. メンバーのカレンダー連携状況を確認
+3. メンバーに再ログインを依頼してカレンダーを再連携
 
 **解決策**:
 - メンバーを有効化

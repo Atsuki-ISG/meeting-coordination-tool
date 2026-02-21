@@ -1,5 +1,5 @@
 import { addMinutes, max, min } from 'date-fns';
-import type { TimeSlot, BusySlot, DateRange, WeeklyAvailability } from '@/types';
+import type { TimeSlot, BusySlot, DateRange, WeeklyAvailability, TimeRestrictionCustom } from '@/types';
 import { DEFAULT_AVAILABILITY } from '@/types';
 
 // Japan Standard Time is UTC+9 (no DST)
@@ -36,6 +36,47 @@ const DEFAULT_CONFIG: AvailabilityConfig = {
   minBookingNoticeMinutes: 60, // At least 1 hour notice required
   weeklyAvailability: DEFAULT_AVAILABILITY,
 };
+
+/**
+ * Intersect busy slots: return only time ranges where ALL members are busy.
+ * Used for 'any_available' mode (block only when everyone is busy).
+ */
+export function intersectBusySlots(busySlotsArrays: BusySlot[][], totalMembers: number): BusySlot[] {
+  if (busySlotsArrays.length === 0 || totalMembers === 0) return [];
+
+  // Build sweep-line events: +1 when a busy slot starts, -1 when it ends
+  type SweepEvent = { time: number; delta: number };
+  const events: SweepEvent[] = [];
+
+  for (const slots of busySlotsArrays) {
+    for (const slot of slots) {
+      events.push({ time: slot.start.getTime(), delta: 1 });
+      events.push({ time: slot.end.getTime(), delta: -1 });
+    }
+  }
+
+  // Sort by time; for ties, process -1 (end) before +1 (start) to avoid false intersections
+  events.sort((a, b) => a.time - b.time || a.delta - b.delta);
+
+  const intersection: BusySlot[] = [];
+  let count = 0;
+  let intersectStart: number | null = null;
+
+  for (const event of events) {
+    count += event.delta;
+    if (count === totalMembers && intersectStart === null) {
+      intersectStart = event.time;
+    } else if (count < totalMembers && intersectStart !== null) {
+      intersection.push({
+        start: new Date(intersectStart),
+        end: new Date(event.time),
+      });
+      intersectStart = null;
+    }
+  }
+
+  return intersection;
+}
 
 /**
  * Merge overlapping busy slots from multiple sources
@@ -86,6 +127,13 @@ function getWorkingHours(
 
   if (!daySettings || !daySettings.enabled) {
     return { start: date, end: date, enabled: false };
+  }
+
+  if (daySettings.allDay) {
+    // Full day: midnight JST to next midnight JST
+    const start = startOfDayJST(date);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+    return { start, end, enabled: true };
   }
 
   const [startHour, startMin] = daySettings.startTime.split(':').map(Number);
@@ -155,16 +203,61 @@ function splitIntoSlots(
 }
 
 /**
+ * Apply time restriction to working hours (intersection)
+ * Returns null if restriction doesn't apply to this day
+ */
+function applyTimeRestriction(
+  date: Date,
+  workStart: Date,
+  workEnd: Date,
+  restriction: TimeRestrictionCustom | null
+): { start: Date; end: Date } | null {
+  if (!restriction) {
+    return { start: workStart, end: workEnd };
+  }
+
+  const dayOfWeek = getDayJST(date);
+
+  // Check if this day is allowed by the restriction
+  if (!restriction.days.includes(dayOfWeek)) {
+    return null; // Restriction doesn't allow this day
+  }
+
+  // Parse restriction times
+  const [restrictStartHour, restrictStartMin] = restriction.start_time.split(':').map(Number);
+  const [restrictEndHour, restrictEndMin] = restriction.end_time.split(':').map(Number);
+
+  const restrictStart = setHoursJST(date, restrictStartHour, restrictStartMin);
+  const restrictEnd = setHoursJST(date, restrictEndHour, restrictEndMin);
+
+  // Calculate intersection
+  const intersectStart = max([workStart, restrictStart]);
+  const intersectEnd = min([workEnd, restrictEnd]);
+
+  // No overlap
+  if (intersectStart >= intersectEnd) {
+    return null;
+  }
+
+  return { start: intersectStart, end: intersectEnd };
+}
+
+/**
  * Calculate available time slots for booking
  */
 export function calculateAvailability(
   busySlotsArrays: BusySlot[][],
   dateRange: DateRange,
   durationMinutes: number,
-  config: Partial<AvailabilityConfig> = {}
+  config: Partial<AvailabilityConfig> = {},
+  participationMode: 'all_required' | 'any_available' = 'all_required',
+  timeRestriction: TimeRestrictionCustom | null = null
 ): TimeSlot[] {
   const finalConfig = { ...DEFAULT_CONFIG, ...config, slotDurationMinutes: durationMinutes };
-  const mergedBusy = mergeBusySlots(busySlotsArrays);
+  const mergedBusy =
+    participationMode === 'any_available'
+      ? intersectBusySlots(busySlotsArrays, busySlotsArrays.length)
+      : mergeBusySlots(busySlotsArrays);
   const now = new Date();
   const minBookingTime = addMinutes(now, finalConfig.minBookingNoticeMinutes);
 
@@ -186,22 +279,31 @@ export function calculateAvailability(
       continue;
     }
 
+    // Apply time restriction (event type specific)
+    const restricted = applyTimeRestriction(currentDate, workStart, workEnd, timeRestriction);
+    if (!restricted) {
+      // Time restriction doesn't allow this day or time
+      currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
+      continue;
+    }
+
     // Adjust for minimum booking notice
-    const effectiveStart = max([workStart, minBookingTime]);
+    const effectiveStart = max([restricted.start, minBookingTime]);
+    const effectiveEnd = restricted.end;
 
     // Skip if the entire working day is in the past
-    if (effectiveStart >= workEnd) {
+    if (effectiveStart >= effectiveEnd) {
       currentDate = new Date(currentDate.getTime() + 24 * 60 * 60 * 1000);
       continue;
     }
 
     // Filter busy slots that overlap with this day's working hours
     const dayBusy = mergedBusy.filter(
-      (slot) => slot.start < workEnd && slot.end > effectiveStart
+      (slot) => slot.start < effectiveEnd && slot.end > effectiveStart
     );
 
     // Get free slots for this day
-    const freeSlots = getFreeSlots(dayBusy, effectiveStart, workEnd);
+    const freeSlots = getFreeSlots(dayBusy, effectiveStart, effectiveEnd);
 
     // Split free slots into bookable time slots
     for (const freeSlot of freeSlots) {

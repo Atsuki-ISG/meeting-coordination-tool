@@ -188,28 +188,30 @@ export function CalendarPicker({
           <button
             onClick={goToPrevMonth}
             disabled={!hasSlotsBefore}
+            aria-label="前の月"
             className={cn(
-              'p-2 rounded-lg transition-all',
+              'p-2.5 rounded-lg transition-all',
               hasSlotsBefore
                 ? 'hover:bg-slate-100 text-slate-600'
                 : 'text-slate-300 cursor-not-allowed'
             )}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           <button
             onClick={goToNextMonth}
             disabled={!hasSlotsAfter}
+            aria-label="次の月"
             className={cn(
-              'p-2 rounded-lg transition-all',
+              'p-2.5 rounded-lg transition-all',
               hasSlotsAfter
                 ? 'hover:bg-slate-100 text-slate-600'
                 : 'text-slate-300 cursor-not-allowed'
             )}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg aria-hidden="true" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>

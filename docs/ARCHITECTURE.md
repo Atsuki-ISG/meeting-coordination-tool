@@ -74,11 +74,12 @@ src/
 │   │   ├── dashboard/            # ダッシュボード
 │   │   ├── event-types/          # 予約メニュー管理
 │   │   ├── bookings/             # 予約一覧
-│   │   ├── members/              # メンバー管理
-│   │   ├── settings/             # 予約可能時間設定
-│   │   │   └── team/             # チーム管理
+│   │   ├── settings/             # 個人の可用性設定
+│   │   │   └── team/             # チーム設定・メンバー管理
 │   │   ├── admin/                # システム管理画面
-│   │   └── team/                 # チーム作成・参加
+│   │   ├── team/                 # チーム作成・参加
+│   │   ├── members/              # メンバー一覧（サイドバー非表示・URL有効）
+│   │   └── invitations/          # 登録申請（サイドバー非表示・URL有効）
 │   ├── api/
 │   │   ├── auth/                 # 認証API
 │   │   │   ├── login/            # ログイン開始
@@ -204,6 +205,7 @@ src/
 | status | TEXT | DEFAULT 'pending' | ユーザーステータス（pending/active/suspended） |
 | is_system_admin | BOOLEAN | DEFAULT false | システム管理者フラグ |
 | role | TEXT | DEFAULT 'member' | チーム内ロール（admin/member） |
+| is_note_taker | BOOLEAN | DEFAULT false | 議事録担当フラグ |
 | availability_settings | JSONB | - | 予約可能時間設定 |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | 作成日時 |
 | updated_at | TIMESTAMPTZ | DEFAULT NOW() | 更新日時 |
@@ -218,6 +220,7 @@ src/
 | duration_minutes | INTEGER | CHECK (15,30,45,60) | 所要時間（分） |
 | organizer_id | UUID | FK → members | 主催者 |
 | team_id | UUID | FK → teams | 所属チーム |
+| participation_mode | TEXT | DEFAULT 'all_required' | 参加モード（all_required/any_available） |
 | is_active | BOOLEAN | DEFAULT true | 有効フラグ |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() | 作成日時 |
 

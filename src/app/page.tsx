@@ -159,7 +159,7 @@ export default function Home() {
                   2
                 </div>
                 <div className="pl-10">
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">予約メニューを作成</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">予約タイプを作成</h3>
                   <p className="text-slate-600 leading-relaxed">
                     ミーティングの種類、所要時間、参加メンバーを設定。予約リンクが自動生成されます。
                   </p>

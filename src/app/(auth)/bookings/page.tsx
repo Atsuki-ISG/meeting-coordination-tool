@@ -92,10 +92,10 @@ export default function BookingsPage() {
         {/* Main Content */}
         <main className="flex-1 md:ml-72 p-4 pt-20 md:p-10 md:pt-10">
           {/* Header */}
-          <header className="sticky top-0 -mx-10 px-10 py-6 bg-slate-50/80 backdrop-blur-md z-20 flex justify-between items-end mb-8">
+          <header className="sticky top-0 -mx-4 md:-mx-10 px-4 md:px-10 py-4 md:py-6 bg-slate-50/80 backdrop-blur-md z-30 flex justify-between items-end mb-6 md:mb-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">予約一覧</h1>
-              <p className="text-slate-500 font-medium">すべての予約を管理</p>
+              <p className="text-slate-600 font-medium">すべての予約を確認</p>
             </div>
             <div className="flex gap-2">
               <button

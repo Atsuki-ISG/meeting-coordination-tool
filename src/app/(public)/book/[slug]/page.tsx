@@ -83,7 +83,7 @@ export default function BookingPage() {
     setStep('select-time');
   };
 
-  const handleSubmit = async (data: { name: string; email: string; note?: string }) => {
+  const handleSubmit = async (data: { name: string; email: string; companyName?: string; note?: string }) => {
     if (!selectedSlot || !eventTypeId) return;
 
     try {
@@ -99,6 +99,7 @@ export default function BookingPage() {
           endAt: selectedSlot.end.toISOString(),
           name: data.name,
           email: data.email,
+          companyName: data.companyName,
           note: data.note,
         }),
       });
@@ -154,6 +155,46 @@ export default function BookingPage() {
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-12">
+        {/* Step Indicator */}
+        {step !== 'confirmed' && (
+          <div className="flex items-center justify-center mb-8">
+            {([
+              { key: 'select-time', label: '日時を選ぶ', n: 1 },
+              { key: 'fill-form',   label: '情報を入力', n: 2 },
+              { key: 'confirmed',   label: '予約確定',   n: 3 },
+            ] as const).map(({ key, label, n }, i) => {
+              const stepOrder: Record<BookingStep, number> = { 'select-time': 1, 'fill-form': 2, 'confirmed': 3 };
+              const isActive = step === key;
+              const isDone   = stepOrder[step] > n;
+              return (
+                <div key={key} className="flex items-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
+                      isDone
+                        ? 'bg-brand-500 text-white'
+                        : isActive
+                        ? 'bg-brand-500 text-white ring-4 ring-brand-100'
+                        : 'bg-slate-200 text-slate-400'
+                    }`}>
+                      {isDone ? (
+                        <svg aria-hidden="true" className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : n}
+                    </div>
+                    <span className={`text-xs font-medium whitespace-nowrap ${isActive ? 'text-brand-600' : isDone ? 'text-brand-400' : 'text-slate-400'}`}>
+                      {label}
+                    </span>
+                  </div>
+                  {i < 2 && (
+                    <div className={`w-16 sm:w-24 h-0.5 mx-2 mb-5 transition-colors ${isDone ? 'bg-brand-500' : 'bg-slate-200'}`} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Main Card */}
         <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
           {/* Event Info Header */}
