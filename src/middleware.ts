@@ -86,10 +86,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect pending users to pending page for all protected routes
+  // Redirect pending users to pending page for protected/admin routes
+  // Note: /team (authOnlyRoutes) is intentionally allowed for pending users
+  // so they can enter an invite code to activate their account
   if (isAuthenticated && isPending &&
       (protectedRoutes.some((route) => pathname.startsWith(route)) ||
-       authOnlyRoutes.some((route) => pathname.startsWith(route)) ||
        systemAdminRoutes.some((route) => pathname.startsWith(route)))) {
     return NextResponse.redirect(new URL('/pending-approval', request.url));
   }

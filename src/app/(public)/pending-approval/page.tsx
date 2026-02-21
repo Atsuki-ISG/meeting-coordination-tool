@@ -73,10 +73,17 @@ export default function PendingApprovalPage() {
 
           {/* Actions */}
           <div className="space-y-3">
+            <a
+              href="/team"
+              className="block w-full px-6 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition text-center"
+            >
+              招待コードで参加する
+            </a>
+
             <button
               onClick={checkStatus}
               disabled={checkingStatus}
-              className="w-full px-6 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition disabled:opacity-50"
+              className="w-full px-6 py-3 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition disabled:opacity-50"
             >
               {checkingStatus ? (
                 <span className="flex items-center justify-center gap-2">
@@ -101,7 +108,7 @@ export default function PendingApprovalPage() {
 
           {/* Info */}
           <p className="mt-6 text-xs text-slate-400">
-            承認されると自動的にページが更新されます
+            招待コードをお持ちの場合は「招待コードで参加する」から即時参加できます
           </p>
         </div>
       </div>

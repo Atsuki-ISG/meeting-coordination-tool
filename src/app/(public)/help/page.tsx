@@ -85,14 +85,27 @@ export default function HelpPage() {
               </div>
             </SubSection>
 
-            <SubSection title="1.2 承認を待つ">
+            <SubSection title="1.2 承認を待つ / 招待コードで参加する">
               <p className="text-slate-600 mb-3">初回ログイン後、<strong>承認待ち画面</strong>が表示されます。</p>
-              <ul className="space-y-1.5 text-slate-600">
-                <li>• システム管理者があなたのアカウントを承認するまでお待ちください</li>
-                <li>• 画面は30秒ごとに自動でステータスを確認します</li>
-                <li>• 「ステータスを確認」ボタンで手動確認も可能です</li>
-                <li>• 承認されると自動的にチーム画面に移動します</li>
-              </ul>
+              <div className="grid sm:grid-cols-2 gap-4 mb-3">
+                <div className="bg-brand-50 border border-brand-200 rounded-xl p-4">
+                  <p className="font-semibold text-brand-800 mb-2">招待コードをお持ちの場合（推奨）</p>
+                  <Steps steps={[
+                    '「招待コードで参加する」ボタンをクリック',
+                    '招待コードを入力して「参加する」',
+                    '即時参加完了・ダッシュボードへ',
+                  ]} />
+                </div>
+                <div className="bg-slate-50 rounded-xl p-4">
+                  <p className="font-semibold text-slate-800 mb-2">招待コードがない場合</p>
+                  <ul className="space-y-1.5 text-slate-600 text-sm">
+                    <li>• システム管理者の承認をお待ちください</li>
+                    <li>• 30秒ごとに自動でステータス確認</li>
+                    <li>• 「ステータスを確認」で手動確認も可能</li>
+                    <li>• 承認後に自動でチーム画面へ移動</li>
+                  </ul>
+                </div>
+              </div>
             </SubSection>
 
             <SubSection title="1.3 チームに参加する">

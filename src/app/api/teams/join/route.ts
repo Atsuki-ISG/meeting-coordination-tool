@@ -66,19 +66,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Switch active team
+    // Switch active team and activate account if pending
     await supabase
       .from('members')
-      .update({ team_id: team.id, role: 'member' })
+      .update({ team_id: team.id, role: 'member', status: 'active' })
       .eq('id', user.memberId);
 
-    // Update session with team_id
+    // Update session with team_id and active status
     await createSession({
       memberId: user.memberId,
       email: user.email,
       name: user.name,
       teamId: team.id,
-      status: user.status,
+      status: 'active',
       isSystemAdmin: user.isSystemAdmin,
     });
 

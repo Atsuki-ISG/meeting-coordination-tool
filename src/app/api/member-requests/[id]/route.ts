@@ -51,24 +51,75 @@ export async function PATCH(
     }
 
     if (action === 'approve') {
-      // Create a new member from the request
-      const { data: newMember, error: createError } = await supabase
+      // Check if a member already exists with this email (e.g. logged in before approval)
+      const { data: existingMember } = await supabase
         .from('members')
-        .insert({
-          email: memberRequest.email,
-          name: memberRequest.name,
-          google_refresh_token: memberRequest.google_refresh_token,
-          is_active: true,
-          availability_settings: DEFAULT_AVAILABILITY,
-          role: 'member',
-          team_id: adminMember.team_id,
-        })
-        .select()
+        .select('id')
+        .eq('email', memberRequest.email)
         .single();
 
-      if (createError) {
-        console.error('Error creating member:', createError);
-        return NextResponse.json({ error: 'Failed to create member' }, { status: 500 });
+      let newMember;
+      let memberId: string;
+
+      if (existingMember) {
+        // Update the existing pending member instead of creating a duplicate
+        const { data: updatedMember, error: updateError } = await supabase
+          .from('members')
+          .update({
+            name: memberRequest.name,
+            google_refresh_token: memberRequest.google_refresh_token,
+            is_active: true,
+            availability_settings: DEFAULT_AVAILABILITY,
+            role: 'member',
+            team_id: adminMember.team_id,
+            status: 'active',
+          })
+          .eq('id', existingMember.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Error updating member:', updateError);
+          return NextResponse.json({ error: 'Failed to activate member' }, { status: 500 });
+        }
+        newMember = updatedMember;
+        memberId = existingMember.id;
+      } else {
+        // Create a new member from the request
+        const { data: createdMember, error: createError } = await supabase
+          .from('members')
+          .insert({
+            email: memberRequest.email,
+            name: memberRequest.name,
+            google_refresh_token: memberRequest.google_refresh_token,
+            is_active: true,
+            availability_settings: DEFAULT_AVAILABILITY,
+            role: 'member',
+            team_id: adminMember.team_id,
+            status: 'active',
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating member:', createError);
+          return NextResponse.json({ error: 'Failed to create member' }, { status: 500 });
+        }
+        newMember = createdMember;
+        memberId = createdMember.id;
+      }
+
+      // Add to team_memberships so the member appears in /api/my-teams
+      if (adminMember.team_id) {
+        const { error: membershipError } = await supabase
+          .from('team_memberships')
+          .upsert(
+            { member_id: memberId, team_id: adminMember.team_id, role: 'member' },
+            { onConflict: 'member_id,team_id', ignoreDuplicates: true }
+          );
+        if (membershipError) {
+          console.error('Error adding team membership:', membershipError);
+        }
       }
 
       // Update the request status
