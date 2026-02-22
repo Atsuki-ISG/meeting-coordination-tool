@@ -158,17 +158,16 @@ export async function POST(request: NextRequest) {
       memberIds.push(eventType.organizer_id);
     }
 
-    // Get note-taker emails only if this event type opts in
+    // Get note-taker email if a specific member is designated
     let noteTakerEmails: string[] = [];
-    if (eventType.include_note_takers) {
-      const { data: noteTakers } = await supabase
+    if (eventType.note_taker_member_id) {
+      const { data: noteTaker } = await supabase
         .from('members')
         .select('email')
+        .eq('id', eventType.note_taker_member_id)
         .eq('is_active', true)
-        .eq('team_id', eventType.team_id)
-        .eq('is_note_taker', true)
-        .not('google_refresh_token', 'is', null);
-      noteTakerEmails = (noteTakers || []).map((m) => m.email);
+        .single();
+      if (noteTaker) noteTakerEmails = [noteTaker.email];
     }
 
     const { data: members } = await supabase

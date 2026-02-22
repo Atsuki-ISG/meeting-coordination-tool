@@ -41,7 +41,7 @@ export default function NewEventTypePage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [participationMode, setParticipationMode] = useState<'all_required' | 'any_available'>('all_required');
-  const [includeNoteTakers, setIncludeNoteTakers] = useState(false);
+  const [noteTakerMemberId, setNoteTakerMemberId] = useState<string | null>(null);
   const [calendarTitleTemplate, setCalendarTitleTemplate] = useState('{メニュー名} - {予約者名}');
   const [timeRestrictionType, setTimeRestrictionType] = useState<'none' | 'preset' | 'custom'>('none');
   const [timeRestrictionPresetId, setTimeRestrictionPresetId] = useState<string | null>(null);
@@ -104,7 +104,7 @@ export default function NewEventTypePage() {
           ...data,
           memberIds: selectedMemberIds,
           participationMode,
-          includeNoteTakers,
+          noteTakerMemberId,
           calendarTitleTemplate,
           timeRestrictionType,
           timeRestrictionPresetId: timeRestrictionType === 'preset' ? timeRestrictionPresetId : null,
@@ -215,7 +215,7 @@ export default function NewEventTypePage() {
               </div>
 
               {/* Members Selection */}
-              {members.filter((m) => !m.is_note_taker).length >= 1 && (
+              {members.length >= 1 && (
                 <div>
                   {/* Participation Mode */}
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -249,7 +249,7 @@ export default function NewEventTypePage() {
                     選択したメンバーの予定から共通の空き時間を見つけます
                   </p>
                   <div className="space-y-2">
-                    {members.filter((m) => !m.is_note_taker).map((member) => (
+                    {members.map((member) => (
                       <label
                         key={member.id}
                         className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
@@ -285,26 +285,27 @@ export default function NewEventTypePage() {
                 </div>
               )}
 
-              {/* Note-takers */}
-              {members.some((m) => m.is_note_taker) && (
-                <div className="flex items-center justify-between rounded-xl border-2 border-slate-200 p-4">
-                  <div>
-                    <p className="font-semibold text-sm text-slate-900">メモ取り担当者を自動招待</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      メモ取り担当に設定されたメンバーをカレンダー招待に自動で追加します
-                    </p>
-                  </div>
-                  <label className="flex items-center cursor-pointer">
-                    <div className="relative">
-                      <input
-                        type="checkbox"
-                        checked={includeNoteTakers}
-                        onChange={(e) => setIncludeNoteTakers(e.target.checked)}
-                        className="sr-only peer"
-                      />
-                      <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
-                    </div>
+              {/* Note-taker */}
+              {members.length >= 1 && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    議事録担当
                   </label>
+                  <p className="text-sm text-slate-500 mb-3">
+                    選択したメンバーをカレンダー招待に自動で追加します
+                  </p>
+                  <select
+                    value={noteTakerMemberId || ''}
+                    onChange={(e) => setNoteTakerMemberId(e.target.value || null)}
+                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
+                  >
+                    <option value="">なし</option>
+                    {members.map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               )}
 

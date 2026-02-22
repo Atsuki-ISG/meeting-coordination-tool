@@ -92,7 +92,7 @@ export interface EventType {
   organizer_id: string;
   is_active: boolean;
   participation_mode: 'all_required' | 'any_available';
-  include_note_takers: boolean;
+  note_taker_member_id: string | null;
   calendar_title_template: string;
   time_restriction_type: 'none' | 'preset' | 'custom';
   time_restriction_preset_id: string | null;
