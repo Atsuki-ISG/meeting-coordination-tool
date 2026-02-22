@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: "MeetFlow のデプロイとドキュメント更新を行う。使用タイミング: ユーザーが「デプロイして」「ドキュメント更新して」「リリースして」と言った場合。手順: 1) TypeScript型チェック 2) ドキュメント更新（docs/USER_GUIDE.md, docs/FEATURES.md, src/app/(public)/help/page.tsx） 3) Cloud Run デプロイ"
+description: "MeetFlow のデプロイとドキュメント更新を行う。使用タイミング: ユーザーが「デプロイして」「ドキュメント更新して」「リリースして」と言った場合。手順: 1) TypeScript型チェック 2) Gitコミット・プッシュ 3) ドキュメント更新（docs/USER_GUIDE.md, docs/FEATURES.md, src/app/(public)/help/page.tsx） 4) Cloud Run デプロイ"
 ---
 
 # MeetFlow デプロイ & ドキュメント更新スキル
@@ -29,7 +29,51 @@ npx tsc --noEmit
 
 エラーがあれば修正してから次へ。
 
-### 2. ドキュメント更新（3ファイル必須）
+### 2. Git コミット・プッシュ
+
+#### ① 現在の状態を確認
+
+```bash
+git status
+git diff --stat
+git log --oneline -5
+```
+
+#### ② 変更をステージング
+
+```bash
+git add -A
+```
+
+#### ③ コミット
+
+変更内容を反映した詳細なコミットメッセージを作成：
+
+```bash
+git commit -m "$(cat <<'EOF'
+[タイトル: feat/fix/docs など]
+
+## 主な変更
+- 変更内容1
+- 変更内容2
+
+## 詳細
+- 具体的な変更点
+- 追加した機能
+- 修正したバグ
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+EOF
+)"
+```
+
+#### ④ プッシュ
+
+```bash
+git push
+```
+
+### 3. ドキュメント更新（3ファイル必須）
 
 変更内容に応じて以下を必ず更新する。更新漏れがないように。
 
@@ -48,11 +92,16 @@ npx tsc --noEmit
 - 必ず USER_GUIDE.md と同期した内容にすること
 - 印刷ボタンは `src/app/(public)/help/print-button.tsx`（クライアントコンポーネント）に分離済み
 
-### 3. Cloud Run デプロイ
+### 4. Cloud Run デプロイ
 
 ```bash
 gcloud run deploy meetflow --source . --region asia-northeast1 --allow-unauthenticated
 ```
+
+**注意**:
+- ローカルのソースコード（Dockerfile含む）をCloud Buildにアップロード
+- クラウド上でDockerイメージをビルド → Cloud Runにデプロイ
+- Gitの状態に関わらず、ローカルのファイルシステムを使用
 
 認証エラーが出た場合:
 ```bash
