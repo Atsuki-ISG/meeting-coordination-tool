@@ -189,8 +189,8 @@
 | 説明 | 任意 | - | - |
 | 所要時間 | 必須 | 15/30/45/60分 | 30分 |
 | 参加モード | 必須 | all_required / any_available | all_required |
-| 参加メンバー | 任意 | チーム内メンバー | 作成者のみ |
-| メモ取り担当者を自動招待 | 任意 | boolean | false |
+| 参加メンバー | 任意 | チーム内メンバー（全員選択可） | 作成者のみ |
+| 議事録担当 | 任意 | メンバー1名 or なし | なし |
 | カレンダータイトル | 任意 | テンプレート文字列 | `{メニュー名} - {予約者名}` |
 | 予約可能時間帯の制限 | 任意 | none/preset/custom | none |
 
@@ -230,7 +230,7 @@
 - 説明
 - 所要時間
 - 参加メンバー
-- メモ取り担当者を自動招待（`include_note_takers`）
+- 議事録担当（`note_taker_member_id`）
 - カレンダータイトルテンプレート（`calendar_title_template`）
 - 予約可能時間帯の制限（`time_restriction_type`, `time_restriction_preset_id`, `time_restriction_custom`）
 
@@ -306,7 +306,7 @@
 
 **Googleカレンダーイベント**:
 - タイトル: `{予約タイプ名} - {予約者名}`
-- 参加者: 全メンバー + 予約者（`include_note_takers=true` の場合はメモ取り担当者も自動追加）
+- 参加者: 参加メンバー + 予約者（議事録担当が指定されている場合は自動追加）
 - Google Meet: 自動付与
 - 説明: 備考を含む
 

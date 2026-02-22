@@ -179,8 +179,8 @@ export default function HelpPage() {
                     <tr><td className="px-4 py-3 font-medium text-slate-800">説明</td><td className="px-4 py-3 text-slate-600">予約の詳細説明（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">所要時間</td><td className="px-4 py-3 text-slate-600">15分 / 30分 / 45分 / 60分 から選択</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">参加方式</td><td className="px-4 py-3 text-slate-600">「全員参加」または「誰か1名参加」</td></tr>
-                    <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択</td></tr>
-                    <tr><td className="px-4 py-3 font-medium text-slate-800">メモ取り担当者を自動招待</td><td className="px-4 py-3 text-slate-600">ONにするとメモ取り担当メンバーが自動でカレンダー招待に追加されます</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択（全員から選択可能）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">議事録担当</td><td className="px-4 py-3 text-slate-600">指定したメンバーが参加メンバーに加えてカレンダー招待に自動追加されます（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">カレンダータイトル</td><td className="px-4 py-3 text-slate-600">チーム内部のカレンダーに表示されるタイトルをカスタマイズ。変数ボタンをクリックして挿入でき、プレビューで確認できます（ゲストには表示されません）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">予約可能時間帯の制限</td><td className="px-4 py-3 text-slate-600">「すべての空き時間」「テンプレートから選択」「曜日・時間を指定」から選択。メンバーの可用性設定との共通部分が予約可能枠になります</td></tr>
                   </tbody>
