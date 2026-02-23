@@ -226,41 +226,6 @@ describe('GET /api/members', () => {
       expect(json[1].google_refresh_token).toBeUndefined();
     });
 
-    it('team_memberships 経由のノートテイカーもマージされる', async () => {
-      // 通常メンバー
-      const primaryData = [{
-        id: 'member-2',
-        name: 'Alice',
-        email: 'alice@example.com',
-        is_active: true,
-        role: 'member',
-        is_note_taker: false,
-        google_refresh_token: 'token',
-      }];
-      // team_memberships 経由のノートテイカー（別チーム所属）
-      const noteTakerData = [{
-        member: {
-          id: 'member-ops',
-          name: '運営事務局',
-          email: 'ops@example.com',
-          is_active: true,
-          role: 'member',
-          is_note_taker: true,
-          google_refresh_token: null,
-        },
-      }];
-
-      setupFromMock(
-        { data: primaryData, error: null },
-        { data: noteTakerData, error: null }
-      );
-
-      const res = await GET(new NextRequest('http://localhost/api/members'));
-      const json = await res.json();
-
-      expect(json).toHaveLength(2);
-      expect(json.some((m: { email: string }) => m.email === 'ops@example.com')).toBe(true);
-    });
   });
 
   it('データが空の場合は空配列を返す', async () => {

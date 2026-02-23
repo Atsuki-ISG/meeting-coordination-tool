@@ -363,7 +363,7 @@ export default function EventTypeDetailPage() {
                       選択したメンバーの予定から共通の空き時間を見つけます
                     </p>
                     <div className="space-y-2">
-                      {members.filter((m) => !m.is_note_taker).map((member) => (
+                      {members.map((member) => (
                         <label
                           key={member.id}
                           className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
