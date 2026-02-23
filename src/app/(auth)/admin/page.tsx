@@ -51,7 +51,7 @@ export default function AdminPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
   const [assignModal, setAssignModal] = useState<{ memberId: string; memberName: string } | null>(null);
-  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [selectedRole, setSelectedRole] = useState<'member' | 'admin'>('member');
 
   const fetchMembers = async () => {
@@ -141,23 +141,35 @@ export default function AdminPage() {
 
   const openAssignModal = (member: AllMember) => {
     setAssignModal({ memberId: member.id, memberName: member.name });
-    setSelectedTeamId(member.team_id ?? teams[0]?.id ?? '');
+    setSelectedTeamIds(member.team_memberships.map((tm) => tm.id));
     setSelectedRole('member');
   };
 
+  const toggleTeamSelection = (teamId: string) => {
+    setSelectedTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId]
+    );
+  };
+
   const assignTeam = async () => {
-    if (!assignModal || !selectedTeamId) return;
+    if (!assignModal) return;
+    const member = allMembers.find((m) => m.id === assignModal.memberId);
+    const existingIds = member?.team_memberships.map((tm) => tm.id) ?? [];
+    const newTeamIds = selectedTeamIds.filter((id) => !existingIds.includes(id));
+    if (newTeamIds.length === 0) { setAssignModal(null); return; }
     setProcessingId(assignModal.memberId);
     try {
-      const res = await fetch(`/api/admin/members/${assignModal.memberId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_id: selectedTeamId, role: selectedRole }),
-      });
-      if (res.ok) {
-        setAssignModal(null);
-        await fetchMembers();
-      }
+      await Promise.all(
+        newTeamIds.map((teamId) =>
+          fetch(`/api/admin/members/${assignModal.memberId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ team_id: teamId, role: selectedRole }),
+          })
+        )
+      );
+      setAssignModal(null);
+      await fetchMembers();
     } catch (error) {
       console.error('Failed to assign team:', error);
     } finally {
@@ -419,7 +431,7 @@ export default function AdminPage() {
                               )}
                             </div>
                             <p className="text-sm text-slate-500">{member.email}</p>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="mt-1">
                               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                 member.status === 'active'
                                   ? 'bg-green-100 text-green-700'
@@ -429,15 +441,17 @@ export default function AdminPage() {
                               }`}>
                                 {member.status === 'active' ? '有効' : member.status === 'pending' ? '承認待ち' : '停止中'}
                               </span>
+                            </div>
+                            <div className="mt-1 flex flex-col gap-1">
                               {member.team_memberships.length > 0 ? (
                                 member.team_memberships.map((tm) => (
-                                  <span key={tm.id} className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                                  <span key={tm.id} className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full w-fit">
                                     {tm.name}
                                     {tm.role === 'admin' && <span className="ml-1 text-brand-600 font-semibold">管理者</span>}
                                   </span>
                                 ))
                               ) : (
-                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">チーム未所属</span>
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit">チーム未所属</span>
                               )}
                             </div>
                           </div>
@@ -612,21 +626,38 @@ export default function AdminPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">チーム</label>
-                <select
-                  value={selectedTeamId}
-                  onChange={(e) => setSelectedTeamId(e.target.value)}
-                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
-                >
-                  <option value="">チームを選択...</option>
-                  {teams.map((team) => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">チーム（複数選択可）</label>
+                <div className="border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                  {teams.map((team) => {
+                    const checked = selectedTeamIds.includes(team.id);
+                    const member = allMembers.find((m) => m.id === assignModal.memberId);
+                    const alreadyJoined = member?.team_memberships.some((tm) => tm.id === team.id) ?? false;
+                    return (
+                      <label
+                        key={team.id}
+                        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition ${
+                          checked ? 'bg-brand-50' : 'hover:bg-slate-50'
+                        } ${alreadyJoined ? 'opacity-60' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={alreadyJoined}
+                          onChange={() => toggleTeamSelection(team.id)}
+                          className="w-4 h-4 accent-brand-500"
+                        />
+                        <span className="text-sm font-medium text-slate-800">{team.name}</span>
+                        {alreadyJoined && (
+                          <span className="ml-auto text-xs text-slate-400">参加済み</span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">ロール</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">ロール（追加するチームに適用）</label>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setSelectedRole('member')}
@@ -661,7 +692,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={assignTeam}
-                disabled={!selectedTeamId || processingId === assignModal.memberId}
+                disabled={processingId === assignModal.memberId}
                 className="flex-1 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition disabled:opacity-50"
               >
                 {processingId === assignModal.memberId ? '処理中...' : '追加'}
