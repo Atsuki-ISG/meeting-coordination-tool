@@ -39,16 +39,19 @@ export default function HelpPage() {
         <nav className="mb-12 p-6 bg-slate-50 rounded-2xl print:hidden">
           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">目次</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <a href="#member" className="text-brand-600 hover:underline font-medium">社内メンバー向け</a>
-            <a href="#external" className="text-brand-600 hover:underline font-medium">外部ユーザー（予約者）向け</a>
+            <a href="#member" className="text-brand-600 hover:underline font-medium col-span-2">社内メンバー向け</a>
             <a href="#setup" className="text-slate-600 hover:underline pl-4">1. 初期セットアップ</a>
-            <a href="#book" className="text-slate-600 hover:underline pl-4">9. 予約の作成</a>
             <a href="#dashboard" className="text-slate-600 hover:underline pl-4">2. ダッシュボード</a>
-            <a href="#cancel" className="text-slate-600 hover:underline pl-4">10. 予約のキャンセル</a>
             <a href="#event-types" className="text-slate-600 hover:underline pl-4">3. 予約タイプの管理</a>
-            <a href="#faq" className="text-brand-600 hover:underline font-medium">よくある質問</a>
             <a href="#availability" className="text-slate-600 hover:underline pl-4">4. 予約可能時間の設定</a>
+            <a href="#bookings" className="text-slate-600 hover:underline pl-4">5. 予約の確認</a>
             <a href="#team" className="text-slate-600 hover:underline pl-4">6. チーム設定</a>
+            <a href="#admin" className="text-slate-600 hover:underline pl-4">7. システム管理</a>
+            <div />
+            <a href="#external" className="text-brand-600 hover:underline font-medium col-span-2">外部ユーザー（予約者）向け</a>
+            <a href="#book" className="text-slate-600 hover:underline pl-4">8. 予約の作成</a>
+            <a href="#cancel" className="text-slate-600 hover:underline pl-4">9. 予約のキャンセル</a>
+            <a href="#faq" className="text-brand-600 hover:underline font-medium col-span-2">よくある質問</a>
           </div>
         </nav>
 
@@ -239,7 +242,7 @@ export default function HelpPage() {
           </div>
 
           {/* 5. 予約の確認 */}
-          <div className="mb-12">
+          <div id="bookings" className="mb-12">
             <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-brand-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">5</span>
               予約の確認
@@ -295,7 +298,7 @@ export default function HelpPage() {
           </div>
 
           {/* 7. システム管理 */}
-          <div className="mb-12">
+          <div id="admin" className="mb-12">
             <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
               <span className="w-8 h-8 rounded-full bg-purple-500 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">7</span>
               システム管理
@@ -322,21 +325,21 @@ export default function HelpPage() {
             外部ユーザー（予約者）向け
           </h2>
 
-          {/* 9. 予約の作成 */}
+          {/* 8. 予約の作成 */}
           <div id="book" className="mb-12">
             <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-amber-400 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">9</span>
+              <span className="w-8 h-8 rounded-full bg-amber-400 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">8</span>
               予約の作成
             </h3>
 
-            <SubSection title="9.1 予約ページにアクセス">
+            <SubSection title="8.1 予約ページにアクセス">
               <p className="text-slate-600 mb-2">担当者から共有された URL にアクセスします。</p>
               <div className="bg-slate-100 rounded-lg px-4 py-2 font-mono text-sm text-slate-700">
                 例: https://meetflow-xxx.run.app/book/abc123
               </div>
             </SubSection>
 
-            <SubSection title="9.2 ステップを確認する">
+            <SubSection title="8.2 ステップを確認する">
               <div className="flex items-center gap-3 text-sm font-semibold">
                 <span className="px-3 py-1.5 bg-brand-500 text-white rounded-full">① 日時を選ぶ</span>
                 <span className="text-slate-400">→</span>
@@ -346,7 +349,7 @@ export default function HelpPage() {
               </div>
             </SubSection>
 
-            <SubSection title="9.3 カレンダーから日付・時間を選択">
+            <SubSection title="8.3 カレンダーから日付・時間を選択">
               <ul className="space-y-1.5 text-slate-600 text-sm mb-3">
                 <li>• 月間カレンダー形式で空き状況を確認</li>
                 <li>• 各日付に「最早時間」と「残り枠数」が表示されます</li>
@@ -356,7 +359,7 @@ export default function HelpPage() {
               <Steps steps={['カレンダーで希望の日付をクリック', 'その日の空き時間一覧が表示される', '希望の時間をクリック']} />
             </SubSection>
 
-            <SubSection title="9.4 情報を入力">
+            <SubSection title="8.4 情報を入力">
               <div className="overflow-hidden rounded-xl border border-slate-200 text-sm">
                 <div className="overflow-x-auto">
                 <table className="w-full">
@@ -377,7 +380,7 @@ export default function HelpPage() {
               </div>
             </SubSection>
 
-            <SubSection title="9.5 予約を確定">
+            <SubSection title="8.5 予約を確定">
               <Steps steps={['「予約を確定する」ボタンをクリック', '確定画面が表示されます']} />
               <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm">
                 <p className="font-semibold text-amber-800 mb-2">確定後に表示される情報</p>
@@ -391,10 +394,10 @@ export default function HelpPage() {
             </SubSection>
           </div>
 
-          {/* 10. キャンセル */}
+          {/* 9. キャンセル */}
           <div id="cancel" className="mb-12">
             <h3 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-3">
-              <span className="w-8 h-8 rounded-full bg-amber-400 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">10</span>
+              <span className="w-8 h-8 rounded-full bg-amber-400 text-white text-sm font-bold flex items-center justify-center flex-shrink-0 print:bg-gray-800">9</span>
               予約のキャンセル
             </h3>
             <Steps steps={[
