@@ -24,10 +24,9 @@ export async function GET() {
   // Only get members in the same team
   const { data, error } = await supabase
     .from('members')
-    .select('id, name, email, is_active, role, is_note_taker')
+    .select('id, name, email, is_active, role, is_note_taker, google_refresh_token')
     .eq('team_id', user.teamId)
     .eq('is_active', true)
-    .not('google_refresh_token', 'is', null)
     .order('name');
 
   if (error) {
@@ -38,5 +37,11 @@ export async function GET() {
     );
   }
 
-  return NextResponse.json(data || []);
+  // Convert google_refresh_token to boolean to avoid exposing sensitive tokens
+  const members = (data || []).map(({ google_refresh_token, ...m }) => ({
+    ...m,
+    has_google_token: google_refresh_token !== null,
+  }));
+
+  return NextResponse.json(members);
 }

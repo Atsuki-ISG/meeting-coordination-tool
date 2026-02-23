@@ -36,6 +36,7 @@ export interface Member {
   status: MemberStatus;
   is_system_admin: boolean;
   is_note_taker: boolean;
+  has_google_token?: boolean; // API response field (converted from google_refresh_token)
   team_id: string | null;
   created_at: string;
   updated_at: string;
