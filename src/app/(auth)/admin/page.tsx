@@ -31,7 +31,13 @@ interface AllMember {
   status: 'pending' | 'active' | 'suspended';
   is_system_admin: boolean;
   team_id: string | null;
+  team_memberships: { id: string; name: string; role: string }[];
   created_at: string;
+}
+
+interface Team {
+  id: string;
+  name: string;
 }
 
 export default function AdminPage() {
@@ -39,10 +45,14 @@ export default function AdminPage() {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [pendingMembers, setPendingMembers] = useState<PendingMember[]>([]);
   const [allMembers, setAllMembers] = useState<AllMember[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pending' | 'all'>('pending');
+  const [assignModal, setAssignModal] = useState<{ memberId: string; memberName: string } | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState('');
+  const [selectedRole, setSelectedRole] = useState<'member' | 'admin'>('member');
 
   const fetchMembers = async () => {
     try {
@@ -76,6 +86,11 @@ export default function AdminPage() {
         }
 
         await fetchMembers();
+
+        const teamsRes = await fetch('/api/admin/teams');
+        if (teamsRes.ok) {
+          setTeams(await teamsRes.json());
+        }
       } catch (error) {
         console.error('Failed to fetch admin data:', error);
       } finally {
@@ -119,6 +134,32 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to toggle system admin:', error);
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const openAssignModal = (member: AllMember) => {
+    setAssignModal({ memberId: member.id, memberName: member.name });
+    setSelectedTeamId(member.team_id ?? teams[0]?.id ?? '');
+    setSelectedRole('member');
+  };
+
+  const assignTeam = async () => {
+    if (!assignModal || !selectedTeamId) return;
+    setProcessingId(assignModal.memberId);
+    try {
+      const res = await fetch(`/api/admin/members/${assignModal.memberId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ team_id: selectedTeamId, role: selectedRole }),
+      });
+      if (res.ok) {
+        setAssignModal(null);
+        await fetchMembers();
+      }
+    } catch (error) {
+      console.error('Failed to assign team:', error);
     } finally {
       setProcessingId(null);
     }
@@ -388,13 +429,27 @@ export default function AdminPage() {
                               }`}>
                                 {member.status === 'active' ? '有効' : member.status === 'pending' ? '承認待ち' : '停止中'}
                               </span>
-                              {member.team_id && (
-                                <span className="text-xs text-slate-400">チーム所属</span>
+                              {member.team_memberships.length > 0 ? (
+                                member.team_memberships.map((tm) => (
+                                  <span key={tm.id} className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                                    {tm.name}
+                                    {tm.role === 'admin' && <span className="ml-1 text-brand-600 font-semibold">管理者</span>}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">チーム未所属</span>
                               )}
                             </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openAssignModal(member)}
+                            disabled={processingId === member.id}
+                            className="px-3 py-2 bg-blue-100 text-blue-700 font-semibold rounded-xl hover:bg-blue-200 transition disabled:opacity-50 text-sm"
+                          >
+                            チーム設定
+                          </button>
                           {member.status === 'active' ? (
                             <>
                               <button
@@ -547,6 +602,74 @@ export default function AdminPage() {
           </div>
         </main>
       </div>
+
+      {/* チーム割り当てモーダル */}
+      {assignModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <h3 className="font-bold text-lg text-slate-900 mb-1">チームに追加</h3>
+            <p className="text-sm text-slate-500 mb-6">{assignModal.memberName}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">チーム</label>
+                <select
+                  value={selectedTeamId}
+                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                  className="w-full border border-slate-300 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="">チームを選択...</option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>{team.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">ロール</label>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setSelectedRole('member')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition ${
+                      selectedRole === 'member'
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    メンバー
+                  </button>
+                  <button
+                    onClick={() => setSelectedRole('admin')}
+                    className={`flex-1 py-3 rounded-xl text-sm font-semibold transition ${
+                      selectedRole === 'admin'
+                        ? 'bg-brand-500 text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    管理者
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-8">
+              <button
+                onClick={() => setAssignModal(null)}
+                className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={assignTeam}
+                disabled={!selectedTeamId || processingId === assignModal.memberId}
+                className="flex-1 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition disabled:opacity-50"
+              >
+                {processingId === assignModal.memberId ? '処理中...' : '追加'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

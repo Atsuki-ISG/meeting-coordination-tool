@@ -16,10 +16,10 @@ export async function GET() {
 
     const supabase = await createServiceClient();
 
-    // Get all members
+    // Get all members with all team memberships
     const { data: allMembers, error } = await supabase
       .from('members')
-      .select('id, name, email, status, is_system_admin, team_id, created_at')
+      .select('id, name, email, status, is_system_admin, team_id, created_at, team_memberships(role, teams(id, name))')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -33,9 +33,26 @@ export async function GET() {
     // Filter pending members
     const pendingMembers = allMembers?.filter((m) => m.status === 'pending') || [];
 
+    type MembershipRow = { role: string; teams: { id: string; name: string } | null };
+    const formatMember = (m: typeof allMembers[number]) => {
+      const memberships = (m.team_memberships as unknown as MembershipRow[]) ?? [];
+      return {
+        id: m.id,
+        name: m.name,
+        email: m.email,
+        status: m.status,
+        is_system_admin: m.is_system_admin,
+        team_id: m.team_id,
+        created_at: m.created_at,
+        team_memberships: memberships
+          .filter((tm) => tm.teams)
+          .map((tm) => ({ id: tm.teams!.id, name: tm.teams!.name, role: tm.role })),
+      };
+    };
+
     return NextResponse.json({
-      pending: pendingMembers,
-      all: allMembers || [],
+      pending: pendingMembers.map(formatMember),
+      all: (allMembers || []).map(formatMember),
     });
   } catch (error) {
     console.error('Admin members API error:', error);

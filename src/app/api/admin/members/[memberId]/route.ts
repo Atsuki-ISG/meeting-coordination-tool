@@ -6,6 +6,8 @@ import { getSession } from '@/lib/auth/session';
 const updateMemberSchema = z.object({
   status: z.enum(['active', 'suspended']).optional(),
   is_system_admin: z.boolean().optional(),
+  team_id: z.string().uuid().nullable().optional(),
+  role: z.enum(['admin', 'member']).optional(),
 });
 
 export async function PATCH(
@@ -64,6 +66,19 @@ export async function PATCH(
       updateData.is_system_admin = validatedData.is_system_admin;
     }
 
+    if (validatedData.team_id !== undefined) {
+      updateData.team_id = validatedData.team_id;
+      // チームに追加する場合は自動的に有効化
+      if (validatedData.team_id !== null) {
+        updateData.status = 'active';
+        updateData.is_active = true;
+      }
+    }
+
+    if (validatedData.role !== undefined) {
+      updateData.role = validatedData.role;
+    }
+
     const { error } = await supabase
       .from('members')
       .update(updateData)
@@ -75,6 +90,28 @@ export async function PATCH(
         { error: 'Failed to update member' },
         { status: 500 }
       );
+    }
+
+    // team_id が指定された場合は team_memberships も更新
+    if (validatedData.team_id) {
+      const { error: membershipError } = await supabase
+        .from('team_memberships')
+        .upsert(
+          {
+            member_id: memberId,
+            team_id: validatedData.team_id,
+            role: validatedData.role ?? 'member',
+          },
+          { onConflict: 'member_id,team_id' }
+        );
+
+      if (membershipError) {
+        console.error('Failed to upsert team_memberships:', membershipError);
+        return NextResponse.json(
+          { error: 'Failed to update team membership' },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({ success: true });
