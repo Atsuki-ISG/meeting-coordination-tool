@@ -102,7 +102,6 @@ export async function GET(request: NextRequest) {
       .select('*')
       .in('id', memberIds)
       .eq('is_active', true)
-      .eq('is_note_taker', false)
       .not('google_refresh_token', 'is', null);
 
     if (!members || members.length === 0) {
