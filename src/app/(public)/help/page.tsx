@@ -180,12 +180,14 @@ export default function HelpPage() {
                   <tbody className="divide-y divide-slate-100">
                     <tr><td className="px-4 py-3 font-medium text-slate-800">タイトル</td><td className="px-4 py-3 text-slate-600">予約の名前（例: 初回相談、定例ミーティング）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">説明</td><td className="px-4 py-3 text-slate-600">予約の詳細説明（任意）</td></tr>
-                    <tr><td className="px-4 py-3 font-medium text-slate-800">所要時間</td><td className="px-4 py-3 text-slate-600">15分 / 30分 / 45分 / 60分 から選択</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">所要時間</td><td className="px-4 py-3 text-slate-600">15分 / 30分 / 45分 / 60分 / 90分 / 120分 のプリセット、または「カスタム」で5〜480分の任意の時間を指定</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">参加方式</td><td className="px-4 py-3 text-slate-600">「全員参加」または「誰か1名参加」</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択（全員から選択可能）</td></tr>
-                    <tr><td className="px-4 py-3 font-medium text-slate-800">議事録担当</td><td className="px-4 py-3 text-slate-600">指定したメンバーが参加メンバーに加えてカレンダー招待に自動追加されます（任意）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">議事録担当</td><td className="px-4 py-3 text-slate-600">チーム設定で「議事録担当」に指定されたメンバーから選択。カレンダー招待に自動追加されます（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">カレンダータイトル</td><td className="px-4 py-3 text-slate-600">チーム内部のカレンダーに表示されるタイトルをカスタマイズ。変数ボタンをクリックして挿入でき、プレビューで確認できます（ゲストには表示されません）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">予約可能時間帯の制限</td><td className="px-4 py-3 text-slate-600">「すべての空き時間」「テンプレートから選択」「曜日・時間を指定」から選択。メンバーの可用性設定との共通部分が予約可能枠になります</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">予約を受け付ける</td><td className="px-4 py-3 text-slate-600">トグルで有効/無効を切り替え。無効にすると予約ページにアクセスできなくなります（デフォルト: 有効）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">詳細設定</td><td className="px-4 py-3 text-slate-600">折りたたみ内に「公開期間（1〜90日、デフォルト14日）」「最低予約猶予（なし〜24時間、デフォルト1時間）」「前後のバッファ（なし〜60分、デフォルトなし）」を設定できます</td></tr>
                   </tbody>
                 </table>
                 </div>
