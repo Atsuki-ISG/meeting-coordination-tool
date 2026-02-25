@@ -1,6 +1,6 @@
 ---
 name: deploy
-description: "MeetFlow のデプロイとドキュメント更新を行う。使用タイミング: ユーザーが「デプロイして」「ドキュメント更新して」「リリースして」と言った場合。手順: 1) TypeScript型チェック 2) Gitコミット・プッシュ 3) ドキュメント更新（docs/USER_GUIDE.md, docs/FEATURES.md, src/app/(public)/help/page.tsx） 4) Cloud Run デプロイ"
+description: "MeetFlow のデプロイとドキュメント更新を行う。使用タイミング: ユーザーが「デプロイして」「ドキュメント更新して」「リリースして」と言った場合。手順: 1) テスト・型チェック 2) Gitコミット・プッシュ 3) ドキュメント更新（docs/USER_GUIDE.md, docs/FEATURES.md, src/app/(public)/help/page.tsx） 4) Cloud Run デプロイ"
 ---
 
 # MeetFlow デプロイ & ドキュメント更新スキル
@@ -21,13 +21,13 @@ description: "MeetFlow のデプロイとドキュメント更新を行う。使
 
 ## 実行手順
 
-### 1. TypeScript型チェック
+### 1. テスト・型チェック
 
 ```bash
-npx tsc --noEmit
+npm test && npx tsc --noEmit
 ```
 
-エラーがあれば修正してから次へ。
+どちらかが失敗した場合は修正してから次へ。テストはロジック単体テスト（Supabase・Google Calendar はモック）。
 
 ### 2. Git コミット・プッシュ
 

@@ -505,6 +505,122 @@ describe('calculateAvailability', () => {
     });
   });
 
+  describe('bufferMinutes', () => {
+    it('bufferMinutes=0 は既存動作と同じ', () => {
+      const mondayOnlyConfig = {
+        ...allDisabled,
+        '1': { enabled: true, startTime: '09:00', endTime: '12:00' },
+      };
+
+      const busy: BusySlot[][] = [[
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-15T01:00:00Z') }, // JST 09:00-10:00
+      ]];
+
+      const slotsWithBuffer = calculateAvailability(
+        busy,
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-16T00:00:00Z') },
+        30,
+        { weeklyAvailability: mondayOnlyConfig, minBookingNoticeMinutes: 0, bufferMinutes: 0 }
+      );
+
+      const slotsWithoutBuffer = calculateAvailability(
+        busy,
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-16T00:00:00Z') },
+        30,
+        { weeklyAvailability: mondayOnlyConfig, minBookingNoticeMinutes: 0 }
+      );
+
+      expect(slotsWithBuffer.length).toBe(slotsWithoutBuffer.length);
+      slotsWithBuffer.forEach((slot, i) => {
+        expect(slot.start.getTime()).toBe(slotsWithoutBuffer[i].start.getTime());
+        expect(slot.end.getTime()).toBe(slotsWithoutBuffer[i].end.getTime());
+      });
+    });
+
+    it('busy slot の前後にバッファが適用される', () => {
+      // 月曜 09:00-14:00 JST、busy 11:00-12:00 JST (UTC 02:00-03:00)
+      // buffer 30分 → 実効 busy 10:30-12:30 JST (UTC 01:30-03:30)
+      const mondayOnlyConfig = {
+        ...allDisabled,
+        '1': { enabled: true, startTime: '09:00', endTime: '14:00' },
+      };
+
+      const busy: BusySlot[][] = [[
+        { start: d('2024-01-15T02:00:00Z'), end: d('2024-01-15T03:00:00Z') }, // JST 11:00-12:00
+      ]];
+
+      const slots = calculateAvailability(
+        busy,
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-16T00:00:00Z') },
+        30,
+        { weeklyAvailability: mondayOnlyConfig, minBookingNoticeMinutes: 0, bufferMinutes: 30 }
+      );
+
+      // JST 10:30 (UTC 01:30) より前のスロットのみ AND JST 12:30 (UTC 03:30) 以降のスロットのみ
+      const hasConflict = slots.some(
+        (slot) =>
+          slot.start.getTime() < d('2024-01-15T03:30:00Z').getTime() &&
+          slot.end.getTime() > d('2024-01-15T01:30:00Z').getTime()
+      );
+      expect(hasConflict).toBe(false);
+
+      // 09:00-10:30 の3スロット + 12:30-14:00 の3スロット = 6
+      expect(slots.length).toBe(6);
+    });
+
+    it('バッファ展開後に隣接する busy slot が統合される', () => {
+      // 2つの busy slot が近接: 10:00-10:30 と 11:00-11:30 (JST)
+      // buffer 30分 → 09:30-11:00 と 10:30-12:00 → 統合: 09:30-12:00
+      const mondayOnlyConfig = {
+        ...allDisabled,
+        '1': { enabled: true, startTime: '09:00', endTime: '14:00' },
+      };
+
+      const busy: BusySlot[][] = [[
+        { start: d('2024-01-15T01:00:00Z'), end: d('2024-01-15T01:30:00Z') }, // JST 10:00-10:30
+        { start: d('2024-01-15T02:00:00Z'), end: d('2024-01-15T02:30:00Z') }, // JST 11:00-11:30
+      ]];
+
+      const slots = calculateAvailability(
+        busy,
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-16T00:00:00Z') },
+        30,
+        { weeklyAvailability: mondayOnlyConfig, minBookingNoticeMinutes: 0, bufferMinutes: 30 }
+      );
+
+      // 統合後: 実効 busy 09:30-12:00 JST (UTC 00:30-03:00)
+      // 利用可能: 09:00-09:30 (1スロット) + 12:00-14:00 (4スロット) = 5
+      expect(slots.length).toBe(5);
+      // 最初のスロットは JST 09:00 (UTC 00:00) 開始
+      expect(slots[0].start.getTime()).toBe(d('2024-01-15T00:00:00Z').getTime());
+      expect(slots[0].end.getTime()).toBe(d('2024-01-15T00:30:00Z').getTime());
+    });
+
+    it('カスタム minBookingNoticeMinutes が正しく適用される', () => {
+      // 現在時刻: JST 05:00 (FIXED_NOW = UTC 20:00 前日)
+      // minBookingNotice: 120分 → JST 07:00 以降のみ
+      // 但し workStart は JST 09:00 なのでそちらが有効
+      vi.setSystemTime(new Date('2024-01-15T00:00:00Z')); // JST 09:00
+
+      const mondayOnlyConfig = {
+        ...allDisabled,
+        '1': { enabled: true, startTime: '09:00', endTime: '14:00' },
+      };
+
+      const slots = calculateAvailability(
+        [],
+        { start: d('2024-01-15T00:00:00Z'), end: d('2024-01-16T00:00:00Z') },
+        30,
+        { weeklyAvailability: mondayOnlyConfig, minBookingNoticeMinutes: 120 }
+      );
+
+      // minBookingTime = JST 11:00 (UTC 02:00)
+      slots.forEach((slot) => {
+        expect(slot.start.getTime()).toBeGreaterThanOrEqual(d('2024-01-15T02:00:00Z').getTime());
+      });
+    });
+  });
+
   describe('timeRestriction', () => {
     it('制限外の曜日にはスロットが生成されない', () => {
       // 月曜のみの範囲、制限が火〜金 [2,3,4,5] → 月曜は制限外なので 0 件

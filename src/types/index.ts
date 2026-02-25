@@ -89,7 +89,7 @@ export interface EventType {
   slug: string;
   title: string;
   description: string | null;
-  duration_minutes: 15 | 30 | 45 | 60;
+  duration_minutes: number;
   organizer_id: string;
   is_active: boolean;
   participation_mode: 'all_required' | 'any_available';
@@ -98,6 +98,9 @@ export interface EventType {
   time_restriction_type: 'none' | 'preset' | 'custom';
   time_restriction_preset_id: string | null;
   time_restriction_custom: TimeRestrictionCustom | null;
+  buffer_minutes: number;
+  days_ahead: number;
+  min_notice_minutes: number;
   created_at: string;
 }
 

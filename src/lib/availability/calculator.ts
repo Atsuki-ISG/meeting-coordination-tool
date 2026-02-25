@@ -29,12 +29,14 @@ interface AvailabilityConfig {
   slotDurationMinutes: number;
   minBookingNoticeMinutes: number; // Minimum time before a slot can be booked
   weeklyAvailability: WeeklyAvailability;
+  bufferMinutes: number; // Buffer time before and after each busy slot
 }
 
 const DEFAULT_CONFIG: AvailabilityConfig = {
   slotDurationMinutes: 30,
   minBookingNoticeMinutes: 60, // At least 1 hour notice required
   weeklyAvailability: DEFAULT_AVAILABILITY,
+  bufferMinutes: 0,
 };
 
 /**
@@ -254,10 +256,21 @@ export function calculateAvailability(
   timeRestriction: TimeRestrictionCustom | null = null
 ): TimeSlot[] {
   const finalConfig = { ...DEFAULT_CONFIG, ...config, slotDurationMinutes: durationMinutes };
-  const mergedBusy =
+  const rawMergedBusy =
     participationMode === 'any_available'
       ? intersectBusySlots(busySlotsArrays, busySlotsArrays.length)
       : mergeBusySlots(busySlotsArrays);
+
+  // Apply buffer time: expand each busy slot by bufferMinutes on both sides
+  let mergedBusy = rawMergedBusy;
+  if (finalConfig.bufferMinutes > 0) {
+    const buffered = rawMergedBusy.map((slot) => ({
+      start: addMinutes(slot.start, -finalConfig.bufferMinutes),
+      end: addMinutes(slot.end, finalConfig.bufferMinutes),
+    }));
+    mergedBusy = mergeBusySlots([buffered]);
+  }
+
   const now = new Date();
   const minBookingTime = addMinutes(now, finalConfig.minBookingNoticeMinutes);
 

@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
     }
     const searchParams = request.nextUrl.searchParams;
     const eventTypeId = searchParams.get('eventTypeId');
-    const daysAhead = parseInt(searchParams.get('daysAhead') || '14', 10);
 
     if (!eventTypeId) {
       return NextResponse.json(
@@ -111,7 +110,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Calculate date range
+    // Calculate date range using event type's days_ahead setting
+    const daysAhead = eventType.days_ahead ?? 14;
     const timeMin = new Date();
     const timeMax = addDays(timeMin, daysAhead);
 
@@ -150,7 +150,11 @@ export async function GET(request: NextRequest) {
       busySlotsArrays,
       { start: timeMin, end: timeMax },
       eventType.duration_minutes,
-      { weeklyAvailability },
+      {
+        weeklyAvailability,
+        minBookingNoticeMinutes: eventType.min_notice_minutes ?? 60,
+        bufferMinutes: eventType.buffer_minutes ?? 0,
+      },
       participationMode as 'all_required' | 'any_available',
       timeRestriction
     );

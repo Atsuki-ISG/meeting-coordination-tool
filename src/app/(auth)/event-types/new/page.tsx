@@ -26,10 +26,32 @@ interface TimeSlotPreset {
 
 const DAY_LABELS = ['日', '月', '火', '水', '木', '金', '土'];
 
+const DURATION_PRESETS = ['15', '30', '45', '60', '90', '120'];
+
+const BUFFER_OPTIONS = [
+  { value: 0, label: 'なし' },
+  { value: 5, label: '5分' },
+  { value: 10, label: '10分' },
+  { value: 15, label: '15分' },
+  { value: 30, label: '30分' },
+  { value: 60, label: '60分' },
+];
+
+const MIN_NOTICE_OPTIONS = [
+  { value: 0, label: 'なし' },
+  { value: 30, label: '30分' },
+  { value: 60, label: '1時間' },
+  { value: 120, label: '2時間' },
+  { value: 240, label: '4時間' },
+  { value: 480, label: '8時間' },
+  { value: 1440, label: '24時間' },
+];
+
 const eventTypeSchema = z.object({
   title: z.string().min(1, 'タイトルを入力してください'),
   description: z.string().optional(),
-  durationMinutes: z.enum(['15', '30', '45', '60']),
+  durationMinutes: z.string().min(1, '所要時間を選択してください'),
+  isActive: z.boolean(),
 });
 
 type EventTypeFormData = z.infer<typeof eventTypeSchema>;
@@ -47,6 +69,12 @@ export default function NewEventTypePage() {
   const [timeRestrictionPresetId, setTimeRestrictionPresetId] = useState<string | null>(null);
   const [timeRestrictionCustom, setTimeRestrictionCustom] = useState({ days: [1, 2, 3, 4, 5], start_time: '09:00', end_time: '17:00' });
   const [presets, setPresets] = useState<TimeSlotPreset[]>([]);
+  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [customDuration, setCustomDuration] = useState('');
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [bufferMinutes, setBufferMinutes] = useState(0);
+  const [daysAhead, setDaysAhead] = useState(14);
+  const [minNoticeMinutes, setMinNoticeMinutes] = useState(60);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,15 +110,36 @@ export default function NewEventTypePage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<EventTypeFormData>({
     resolver: zodResolver(eventTypeSchema),
     defaultValues: {
       durationMinutes: '30',
+      isActive: true,
     },
   });
 
   const selectedDuration = watch('durationMinutes');
+  const isActive = watch('isActive');
+
+  const handleDurationSelect = (duration: string) => {
+    setIsCustomDuration(false);
+    setCustomDuration('');
+    setValue('durationMinutes', duration);
+  };
+
+  const handleCustomDurationToggle = () => {
+    setIsCustomDuration(true);
+    setValue('durationMinutes', customDuration || '');
+  };
+
+  const handleCustomDurationChange = (value: string) => {
+    setCustomDuration(value);
+    setValue('durationMinutes', value);
+  };
+
+  const noteTakerMembers = members.filter(m => m.is_note_taker);
 
   const onSubmit = async (data: EventTypeFormData) => {
     try {
@@ -101,7 +150,10 @@ export default function NewEventTypePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...data,
+          title: data.title,
+          description: data.description,
+          durationMinutes: Number(data.durationMinutes),
+          isActive: data.isActive,
           memberIds: selectedMemberIds,
           participationMode,
           noteTakerMemberId,
@@ -109,6 +161,9 @@ export default function NewEventTypePage() {
           timeRestrictionType,
           timeRestrictionPresetId: timeRestrictionType === 'preset' ? timeRestrictionPresetId : null,
           timeRestrictionCustom: timeRestrictionType === 'custom' ? timeRestrictionCustom : null,
+          bufferMinutes,
+          daysAhead,
+          minNoticeMinutes,
         }),
       });
 
@@ -183,30 +238,50 @@ export default function NewEventTypePage() {
                 <label className="block text-sm font-semibold text-slate-700 mb-3">
                   所要時間
                 </label>
-                <div className="grid grid-cols-4 gap-3">
-                  {['15', '30', '45', '60'].map((duration) => (
-                    <label
+                <div className="flex flex-wrap gap-2">
+                  {DURATION_PRESETS.map((duration) => (
+                    <button
                       key={duration}
-                      className={`relative flex cursor-pointer items-center justify-center rounded-xl border-2 p-4 transition-all hover:scale-105 ${
-                        selectedDuration === duration
-                          ? 'border-brand-500 bg-brand-50 shadow-lg shadow-brand-500/20'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      type="button"
+                      onClick={() => handleDurationSelect(duration)}
+                      className={`px-4 py-3 rounded-xl border-2 font-bold transition-all hover:scale-105 ${
+                        !isCustomDuration && selectedDuration === duration
+                          ? 'border-brand-500 bg-brand-50 shadow-lg shadow-brand-500/20 text-brand-600'
+                          : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
                       }`}
                     >
-                      <input
-                        type="radio"
-                        value={duration}
-                        {...register('durationMinutes')}
-                        className="peer sr-only"
-                      />
-                      <span className={`text-lg font-bold ${
-                        selectedDuration === duration ? 'text-brand-600' : 'text-slate-700'
-                      }`}>
-                        {duration}分
-                      </span>
-                    </label>
+                      {duration}分
+                    </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={handleCustomDurationToggle}
+                    className={`px-4 py-3 rounded-xl border-2 font-bold transition-all hover:scale-105 ${
+                      isCustomDuration
+                        ? 'border-brand-500 bg-brand-50 shadow-lg shadow-brand-500/20 text-brand-600'
+                        : 'border-slate-200 bg-white hover:border-slate-300 text-slate-700'
+                    }`}
+                  >
+                    カスタム
+                  </button>
                 </div>
+                {isCustomDuration && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={5}
+                      max={480}
+                      step={5}
+                      value={customDuration}
+                      onChange={(e) => handleCustomDurationChange(e.target.value)}
+                      placeholder="分数を入力"
+                      className="w-32 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+                    />
+                    <span className="text-sm text-slate-500">分（5〜480分、5分刻み）</span>
+                  </div>
+                )}
+                {/* Hidden input for react-hook-form */}
+                <input type="hidden" {...register('durationMinutes')} />
                 {errors.durationMinutes && (
                   <p className="mt-1.5 text-sm text-red-500">
                     {errors.durationMinutes.message}
@@ -223,8 +298,8 @@ export default function NewEventTypePage() {
                   </label>
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     {([
-                      { value: 'all_required', label: '全員参加', desc: '全員が空いている時間のみ表示' },
-                      { value: 'any_available', label: '誰か1名参加', desc: '1人でも空いていれば表示' },
+                      { value: 'all_required', label: '全員参加', desc: '全員の空き時間が一致する時間帯のみ表示されます' },
+                      { value: 'any_available', label: '誰か1名参加', desc: '誰か1人でも空いている時間帯が表示されます' },
                     ] as const).map(({ value, label, desc }) => (
                       <button
                         key={value}
@@ -294,18 +369,24 @@ export default function NewEventTypePage() {
                   <p className="text-sm text-slate-500 mb-3">
                     選択したメンバーをカレンダー招待に自動で追加します
                   </p>
-                  <select
-                    value={noteTakerMemberId || ''}
-                    onChange={(e) => setNoteTakerMemberId(e.target.value || null)}
-                    className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
-                  >
-                    <option value="">なし</option>
-                    {members.map((member) => (
-                      <option key={member.id} value={member.id}>
-                        {member.name}
-                      </option>
-                    ))}
-                  </select>
+                  {noteTakerMembers.length > 0 ? (
+                    <select
+                      value={noteTakerMemberId || ''}
+                      onChange={(e) => setNoteTakerMemberId(e.target.value || null)}
+                      className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
+                    >
+                      <option value="">なし</option>
+                      {noteTakerMembers.map((member) => (
+                        <option key={member.id} value={member.id}>
+                          {member.name}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <p className="text-sm text-slate-500 px-4 py-3 rounded-xl bg-slate-50 border border-slate-200">
+                      議事録担当メンバーはチーム設定で指定できます
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -466,6 +547,97 @@ export default function NewEventTypePage() {
                         onChange={(e) => setTimeRestrictionCustom((prev) => ({ ...prev, end_time: e.target.value }))}
                         className="px-4 py-2 border-2 border-slate-200 rounded-xl text-slate-800 focus:border-brand-500 focus:outline-none"
                       />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Active Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50">
+                <div>
+                  <p className="font-semibold text-slate-900">予約を受け付ける</p>
+                  <p className="text-sm text-slate-500">無効にすると予約ページにアクセスできなくなります</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    {...register('isActive')}
+                    className="sr-only peer"
+                  />
+                  <div className={`w-14 h-8 rounded-full peer transition-all ${
+                    isActive ? 'bg-brand-500' : 'bg-slate-300'
+                  }`}>
+                    <div className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow-md transition-all ${
+                      isActive ? 'left-7' : 'left-1'
+                    }`} />
+                  </div>
+                </label>
+              </div>
+
+              {/* Advanced Settings */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-800 transition"
+                >
+                  <svg className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  詳細設定
+                </button>
+                {showAdvanced && (
+                  <div className="mt-4 space-y-5 pl-6 border-l-2 border-slate-200">
+                    {/* Days Ahead */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        公開期間（何日先まで）
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={1}
+                          max={90}
+                          value={daysAhead}
+                          onChange={(e) => setDaysAhead(Math.max(1, Math.min(90, Number(e.target.value) || 1)))}
+                          className="w-24 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900"
+                        />
+                        <span className="text-sm text-slate-500">日先まで予約可能</span>
+                      </div>
+                    </div>
+
+                    {/* Min Notice */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        最低予約猶予
+                      </label>
+                      <p className="text-xs text-slate-500 mb-2">直前すぎる予約を防ぎます</p>
+                      <select
+                        value={minNoticeMinutes}
+                        onChange={(e) => setMinNoticeMinutes(Number(e.target.value))}
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
+                      >
+                        {MIN_NOTICE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Buffer */}
+                    <div>
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                        前後のバッファ
+                      </label>
+                      <p className="text-xs text-slate-500 mb-2">予定の前後に余裕を確保します</p>
+                      <select
+                        value={bufferMinutes}
+                        onChange={(e) => setBufferMinutes(Number(e.target.value))}
+                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl bg-white text-slate-800 focus:border-brand-500 focus:outline-none"
+                      >
+                        {BUFFER_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 )}

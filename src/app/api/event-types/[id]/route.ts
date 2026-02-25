@@ -6,8 +6,11 @@ import { getSessionUser } from '@/lib/auth/api';
 const updateEventTypeSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
-  durationMinutes: z.number().optional(),
+  durationMinutes: z.number().min(5).max(480).optional(),
   isActive: z.boolean().optional(),
+  bufferMinutes: z.number().min(0).max(120).optional(),
+  daysAhead: z.number().min(1).max(90).optional(),
+  minNoticeMinutes: z.number().min(0).max(10080).optional(),
   memberIds: z.array(z.string().uuid()).optional(),
   participationMode: z.enum(['all_required', 'any_available']).optional(),
   noteTakerMemberId: z.string().uuid().optional().nullable(),
@@ -86,6 +89,9 @@ export async function PATCH(
     if (validatedData.timeRestrictionType !== undefined) updateData.time_restriction_type = validatedData.timeRestrictionType;
     if (validatedData.timeRestrictionPresetId !== undefined) updateData.time_restriction_preset_id = validatedData.timeRestrictionPresetId;
     if (validatedData.timeRestrictionCustom !== undefined) updateData.time_restriction_custom = validatedData.timeRestrictionCustom;
+    if (validatedData.bufferMinutes !== undefined) updateData.buffer_minutes = validatedData.bufferMinutes;
+    if (validatedData.daysAhead !== undefined) updateData.days_ahead = validatedData.daysAhead;
+    if (validatedData.minNoticeMinutes !== undefined) updateData.min_notice_minutes = validatedData.minNoticeMinutes;
 
     const { data, error } = await supabase
       .from('event_types')
