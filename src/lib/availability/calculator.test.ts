@@ -441,13 +441,17 @@ describe('calculateAvailability', () => {
         { weeklyAvailability: mondayJSTConfig, minBookingNoticeMinutes: 0 }
       );
 
-      expect(slots).toHaveLength(2); // 09:00-09:30, 09:30-10:00 (JST)
+      // 15分間隔: 09:00-09:30, 09:15-09:45, 09:30-10:00 (JST) = 3スロット
+      expect(slots).toHaveLength(3);
       // JST 09:00 = UTC 00:00
       expect(slots[0].start.getUTCHours()).toBe(0);
       expect(slots[0].start.getUTCMinutes()).toBe(0);
-      // JST 09:30 = UTC 00:30
+      // JST 09:15 = UTC 00:15
       expect(slots[1].start.getUTCHours()).toBe(0);
-      expect(slots[1].start.getUTCMinutes()).toBe(30);
+      expect(slots[1].start.getUTCMinutes()).toBe(15);
+      // JST 09:30 = UTC 00:30
+      expect(slots[2].start.getUTCHours()).toBe(0);
+      expect(slots[2].start.getUTCMinutes()).toBe(30);
     });
   });
 
@@ -564,8 +568,8 @@ describe('calculateAvailability', () => {
       );
       expect(hasConflict).toBe(false);
 
-      // 09:00-10:30 の3スロット + 12:30-14:00 の3スロット = 6
-      expect(slots.length).toBe(6);
+      // 15分間隔: 09:00-10:30 の5スロット + 12:30-14:00 の5スロット = 10
+      expect(slots.length).toBe(10);
     });
 
     it('バッファ展開後に隣接する busy slot が統合される', () => {
@@ -589,8 +593,8 @@ describe('calculateAvailability', () => {
       );
 
       // 統合後: 実効 busy 09:30-12:00 JST (UTC 00:30-03:00)
-      // 利用可能: 09:00-09:30 (1スロット) + 12:00-14:00 (4スロット) = 5
-      expect(slots.length).toBe(5);
+      // 15分間隔: 09:00-09:30 (1スロット) + 12:00-14:00 (7スロット) = 8
+      expect(slots.length).toBe(8);
       // 最初のスロットは JST 09:00 (UTC 00:00) 開始
       expect(slots[0].start.getTime()).toBe(d('2024-01-15T00:00:00Z').getTime());
       expect(slots[0].end.getTime()).toBe(d('2024-01-15T00:30:00Z').getTime());

@@ -89,7 +89,8 @@ const createBookingSchema = z.object({
   endAt: z.string().datetime(),
   name: z.string().min(1),
   email: z.string().email(),
-  companyName: z.string().optional(),
+  companyName: z.string().min(1, '会社名は必須です'),
+  phoneNumber: z.string().min(1, '電話番号は必須です'),
   note: z.string().min(1, 'ご相談内容・備考は必須です'),
 });
 
@@ -237,15 +238,15 @@ export async function POST(request: NextRequest) {
       ...noteTakerEmails.filter((e) => !members.some((m) => m.email === e)),
     ];
 
-    const companyLine = validatedData.companyName
-      ? `\n【会社名】\n${validatedData.companyName}`
-      : '';
+    const companyLine = `\n【会社名】\n${validatedData.companyName}`;
+    const phoneLine = `\n【電話番号】\n${validatedData.phoneNumber}`;
 
     // Generate calendar title from template (supports both Japanese and legacy English variables)
     const calendarTitle = (eventType.calendar_title_template || '{メニュー名} - {予約者名}')
       .replace('{予約者名}', validatedData.name)
       .replace('{メール}', validatedData.email)
       .replace('{メニュー名}', eventType.title)
+      .replace('{会社名}', validatedData.companyName)
       .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
       .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
       .replace('{備考}', validatedData.note.substring(0, 50))
@@ -253,13 +254,14 @@ export async function POST(request: NextRequest) {
       .replace('{guest_name}', validatedData.name)
       .replace('{guest_email}', validatedData.email)
       .replace('{event_type}', eventType.title)
+      .replace('{company_name}', validatedData.companyName)
       .replace('{date}', slot.start.toLocaleDateString('ja-JP'))
       .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
       .replace('{notes}', validatedData.note.substring(0, 50));
 
     const { eventId: googleEventId, meetLink } = await createCalendarEvent(calendar, {
       summary: calendarTitle,
-      description: `${validatedData.name} 様からのご予約${companyLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
+      description: `${validatedData.name} 様からのご予約${companyLine}${phoneLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
       start: slot.start,
       end: slot.end,
       attendees: internalAttendees,
@@ -301,7 +303,8 @@ export async function POST(request: NextRequest) {
         end_at: validatedData.endAt,
         requester_name: validatedData.name,
         requester_email: validatedData.email,
-        company_name: validatedData.companyName || null,
+        company_name: validatedData.companyName,
+        phone_number: validatedData.phoneNumber,
         note: validatedData.note,
         cancel_token_hash: cancelTokenHash,
         status: 'confirmed',

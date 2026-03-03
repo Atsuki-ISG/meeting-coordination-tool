@@ -30,7 +30,7 @@ interface DayInfo {
   date: Date;
   slots: TimeSlot[];
   earliestTime: string | null;
-  slotCount: number;
+  latestTime: string | null;
 }
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
@@ -86,11 +86,12 @@ export function CalendarPicker({
       const dateKey = format(day, 'yyyy-MM-dd');
       const daySlots = slotsByDate.get(dateKey) || [];
 
+      const lastSlot = daySlots.length > 0 ? daySlots[daySlots.length - 1] : null;
       days.push({
         date: day,
         slots: daySlots,
         earliestTime: daySlots.length > 0 ? format(new Date(daySlots[0].start), 'HH:mm') : null,
-        slotCount: daySlots.length,
+        latestTime: lastSlot ? format(new Date(lastSlot.start), 'HH:mm') : null,
       });
 
       day = addDays(day, 1);
@@ -134,7 +135,7 @@ export function CalendarPicker({
   };
 
   const handleDateClick = (dayInfo: DayInfo) => {
-    if (dayInfo.slotCount === 0) return;
+    if (dayInfo.slots.length === 0) return;
     if (!isSameMonth(dayInfo.date, currentMonth)) return;
 
     setSelectedDate(dayInfo.date);
@@ -240,7 +241,7 @@ export function CalendarPicker({
           {calendarDays.map((dayInfo, index) => {
             const isCurrentMonth = isSameMonth(dayInfo.date, currentMonth);
             const isSelected = selectedDate && isSameDay(dayInfo.date, selectedDate);
-            const hasSlots = dayInfo.slotCount > 0;
+            const hasSlots = dayInfo.slots.length > 0;
             const isPast = isBefore(dayInfo.date, new Date()) && !isToday(dayInfo.date);
             const dayOfWeek = dayInfo.date.getDay();
 
@@ -279,9 +280,11 @@ export function CalendarPicker({
                     <p className="text-xs md:text-sm font-bold text-brand-600">
                       {dayInfo.earliestTime}
                     </p>
-                    <p className="text-[10px] md:text-xs text-slate-500">
-                      残り{dayInfo.slotCount}件
-                    </p>
+                    {dayInfo.latestTime && dayInfo.latestTime !== dayInfo.earliestTime && (
+                      <p className="text-[10px] md:text-xs text-slate-500">
+                        〜{dayInfo.latestTime}
+                      </p>
+                    )}
                   </div>
                 )}
 

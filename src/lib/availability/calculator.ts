@@ -27,6 +27,7 @@ function setHoursJST(date: Date, hours: number, minutes: number): Date {
 
 interface AvailabilityConfig {
   slotDurationMinutes: number;
+  slotIntervalMinutes: number; // Step between slot start times (default 15 min)
   minBookingNoticeMinutes: number; // Minimum time before a slot can be booked
   weeklyAvailability: WeeklyAvailability;
   bufferMinutes: number; // Buffer time before and after each busy slot
@@ -34,6 +35,7 @@ interface AvailabilityConfig {
 
 const DEFAULT_CONFIG: AvailabilityConfig = {
   slotDurationMinutes: 30,
+  slotIntervalMinutes: 15, // Show slots every 15 minutes
   minBookingNoticeMinutes: 60, // At least 1 hour notice required
   weeklyAvailability: DEFAULT_AVAILABILITY,
   bufferMinutes: 0,
@@ -184,21 +186,36 @@ function getFreeSlots(
 }
 
 /**
- * Split a free slot into bookable time slots
+ * Snap a date to the next interval boundary (e.g. next 15-minute mark).
+ * If already on a boundary, returns the date unchanged.
+ */
+function snapToGrid(date: Date, intervalMinutes: number): Date {
+  const intervalMs = intervalMinutes * 60 * 1000;
+  const remainder = date.getTime() % intervalMs;
+  if (remainder === 0) return date;
+  return new Date(date.getTime() + (intervalMs - remainder));
+}
+
+/**
+ * Split a free slot into bookable time slots.
+ * Start times are snapped to the intervalMinutes grid and step by intervalMinutes,
+ * while each slot duration remains durationMinutes.
  */
 function splitIntoSlots(
   freeSlot: TimeSlot,
-  durationMinutes: number
+  durationMinutes: number,
+  intervalMinutes: number = 15
 ): TimeSlot[] {
   const slots: TimeSlot[] = [];
-  let current = freeSlot.start;
+  // Snap to nearest future grid boundary to avoid arbitrary start times (fixes 57-min bug)
+  let current = snapToGrid(freeSlot.start, intervalMinutes);
 
   while (true) {
     const slotEnd = addMinutes(current, durationMinutes);
     if (slotEnd > freeSlot.end) break;
 
     slots.push({ start: new Date(current), end: slotEnd });
-    current = slotEnd;
+    current = addMinutes(current, intervalMinutes);
   }
 
   return slots;
@@ -320,7 +337,7 @@ export function calculateAvailability(
 
     // Split free slots into bookable time slots
     for (const freeSlot of freeSlots) {
-      const slots = splitIntoSlots(freeSlot, finalConfig.slotDurationMinutes);
+      const slots = splitIntoSlots(freeSlot, finalConfig.slotDurationMinutes, finalConfig.slotIntervalMinutes);
       availableSlots.push(...slots);
     }
 

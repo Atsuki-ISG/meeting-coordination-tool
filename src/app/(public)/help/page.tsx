@@ -354,11 +354,11 @@ export default function HelpPage() {
             <SubSection title="8.3 カレンダーから日付・時間を選択">
               <ul className="space-y-1.5 text-slate-600 text-sm mb-3">
                 <li>• 月間カレンダー形式で空き状況を確認</li>
-                <li>• 各日付に「最早時間」と「残り枠数」が表示されます</li>
+                <li>• 各日付に「最早〜最遅の開始時刻」が表示されます（例: 09:00〜16:00）</li>
                 <li>• 空きがない日は「ー」と表示されます</li>
-                <li>• 日付をクリックすると時間枠が表示されます</li>
+                <li>• 日付をクリックすると 15分間隔の時間枠一覧が表示されます</li>
               </ul>
-              <Steps steps={['カレンダーで希望の日付をクリック', 'その日の空き時間一覧が表示される', '希望の時間をクリック']} />
+              <Steps steps={['カレンダーで希望の日付をクリック', 'その日の空き時間が 15分間隔で表示される', '希望の時間をクリック']} />
             </SubSection>
 
             <SubSection title="8.4 情報を入力">
@@ -375,6 +375,8 @@ export default function HelpPage() {
                   <tbody className="divide-y divide-slate-100">
                     <tr><td className="px-4 py-3 font-medium">お名前</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">予約者の名前</td></tr>
                     <tr><td className="px-4 py-3 font-medium">メールアドレス</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先メールアドレス</td></tr>
+                    <tr><td className="px-4 py-3 font-medium">会社名</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">所属する会社・組織名</td></tr>
+                    <tr><td className="px-4 py-3 font-medium">電話番号</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先電話番号</td></tr>
                     <tr><td className="px-4 py-3 font-medium">ご相談内容・備考</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">相談したい内容や伝達事項</td></tr>
                   </tbody>
                 </table>

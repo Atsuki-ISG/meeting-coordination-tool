@@ -83,7 +83,7 @@ export default function BookingPage() {
     setStep('select-time');
   };
 
-  const handleSubmit = async (data: { name: string; email: string; companyName?: string; note?: string }) => {
+  const handleSubmit = async (data: { name: string; email: string; companyName: string; phoneNumber: string; note: string }) => {
     if (!selectedSlot || !eventTypeId) return;
 
     try {
@@ -100,6 +100,7 @@ export default function BookingPage() {
           name: data.name,
           email: data.email,
           companyName: data.companyName,
+          phoneNumber: data.phoneNumber,
           note: data.note,
         }),
       });
