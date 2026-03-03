@@ -408,6 +408,7 @@ export default function NewEventTypePage() {
                   {([
                     { var: '{予約者名}', label: '予約者名' },
                     { var: '{メニュー名}', label: 'メニュー名' },
+                    { var: '{会社名}', label: '会社名' },
                     { var: '{日付}', label: '日付' },
                     { var: '{時刻}', label: '時刻' },
                     { var: '{メール}', label: 'メール' },
@@ -438,6 +439,7 @@ export default function NewEventTypePage() {
                         .replace('{予約者名}', '山田太郎')
                         .replace('{メール}', 'yamada@example.com')
                         .replace('{メニュー名}', watch('title') || '初回相談')
+                        .replace('{会社名}', '株式会社〇〇')
                         .replace('{日付}', '2026/2/20')
                         .replace('{時刻}', '14:00')
                         .replace('{備考}', 'サービスについて相談')}
