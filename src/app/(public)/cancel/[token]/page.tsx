@@ -111,7 +111,7 @@ function CancelContent() {
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               />
             </svg>
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-slate-500">
               Processing cancellation...
             </p>
           </div>
@@ -134,7 +134,7 @@ function CancelContent() {
                 />
               </svg>
             </div>
-            <p className="text-gray-600">
+            <p className="text-slate-600">
               Your booking has been canceled successfully. All attendees have been notified.
             </p>
           </div>
@@ -157,7 +157,7 @@ function CancelContent() {
                 />
               </svg>
             </div>
-            <p className="text-gray-600">{error}</p>
+            <p className="text-slate-600">{error}</p>
             <Button
               variant="outline"
               className="mt-4"
@@ -174,11 +174,11 @@ function CancelContent() {
 
 export default function CancelPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <Suspense fallback={
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
-            <p className="text-gray-500">Loading...</p>
+            <p className="text-slate-500">Loading...</p>
           </CardContent>
         </Card>
       }>

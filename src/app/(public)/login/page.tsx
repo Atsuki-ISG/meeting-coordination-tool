@@ -36,7 +36,7 @@ function LoginContent() {
               承認されるとログインできるようになります。
             </p>
           </div>
-          <p className="text-center text-xs text-gray-500">
+          <p className="text-center text-xs text-slate-500">
             承認までしばらくお待ちください。
           </p>
         </CardContent>
@@ -133,7 +133,7 @@ function LoginContent() {
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-500">
+        <p className="text-center text-xs text-slate-500">
           ログインすると、Googleカレンダーとの連携に同意したものとします。
         </p>
       </CardContent>
@@ -143,11 +143,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
       <Suspense fallback={
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
-            <p className="text-gray-500">読み込み中...</p>
+            <p className="text-slate-500">読み込み中...</p>
           </CardContent>
         </Card>
       }>
