@@ -61,7 +61,7 @@ export function BookingForm({
         {/* Name */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            お名前
+            お名前 <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -77,7 +77,7 @@ export function BookingForm({
         {/* Email */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            メールアドレス
+            メールアドレス <span className="text-red-500">*</span>
           </label>
           <input
             type="email"
@@ -125,7 +125,7 @@ export function BookingForm({
         {/* Note */}
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-2">
-            ご相談内容・備考
+            ご相談内容・備考 <span className="text-red-500">*</span>
           </label>
           <textarea
             {...register('note')}
