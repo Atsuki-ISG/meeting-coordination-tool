@@ -263,6 +263,28 @@ export default function SettingsPage() {
               ))}
             </div>
           </div>
+
+          {/* Sticky save bar */}
+          {isDirty && (
+            <div className="sticky bottom-0 -mx-4 md:-mx-10 px-4 md:px-10 py-4 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_-10px_rgba(0,0,0,0.1)] z-20 flex items-center justify-between gap-4">
+              <p className="text-sm text-slate-500 font-medium">未保存の変更があります</p>
+              <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-full text-white font-bold text-sm shadow-lg shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95 bg-gradient-to-r from-brand-500 to-brand-600 disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    保存中...
+                  </>
+                ) : '設定を保存'}
+              </button>
+            </div>
+          )}
         </main>
       </div>
     </div>

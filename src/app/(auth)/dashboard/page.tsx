@@ -114,7 +114,7 @@ export default function DashboardPage() {
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-10">
             {/* Event Types Count */}
-            <div className="relative group p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
+            <div className="relative group p-6 md:p-8 rounded-2xl bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Upcoming Bookings Count */}
-            <div className="relative group p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
+            <div className="relative group p-6 md:p-8 rounded-2xl bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Confirmed Count */}
-            <div className="relative group p-6 md:p-8 rounded-2xl md:rounded-[2rem] bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
+            <div className="relative group p-6 md:p-8 rounded-2xl bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] transition-all duration-500 border border-slate-100 overflow-hidden">
               <div className="relative z-10">
                 <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

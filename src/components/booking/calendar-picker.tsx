@@ -301,35 +301,64 @@ export function CalendarPicker({
       </div>
 
       {/* Time slots for selected date */}
-      {selectedDate && slotsForSelectedDate.length > 0 && (
-        <div className="border border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50">
-          <h4 className="text-base font-bold text-slate-900 mb-4">
-            {format(selectedDate, 'M月d日（E）', { locale: ja })}の空き枠
-          </h4>
-          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
-            {slotsForSelectedDate.map((slot) => {
-              const isSelected =
-                selectedSlot &&
-                new Date(slot.start).getTime() === new Date(selectedSlot.start).getTime();
+      {selectedDate && slotsForSelectedDate.length > 0 && (() => {
+        const morningSlots = slotsForSelectedDate.filter(
+          (slot) => new Date(slot.start).getHours() < 12
+        );
+        const afternoonSlots = slotsForSelectedDate.filter(
+          (slot) => {
+            const h = new Date(slot.start).getHours();
+            return h >= 12 && h < 18;
+          }
+        );
+        const eveningSlots = slotsForSelectedDate.filter(
+          (slot) => new Date(slot.start).getHours() >= 18
+        );
 
-              return (
-                <button
-                  key={slot.start.toString()}
-                  onClick={() => onSelectSlot(slot)}
-                  className={cn(
-                    'px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
-                    isSelected
-                      ? 'border-brand-500 bg-brand-500 text-white shadow-lg shadow-brand-500/30'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-600 hover:scale-105'
-                  )}
-                >
-                  {format(new Date(slot.start), 'HH:mm')}
-                </button>
-              );
-            })}
+        const renderGroup = (label: string, groupSlots: TimeSlot[]) => {
+          if (groupSlots.length === 0) return null;
+          return (
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{label}</p>
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {groupSlots.map((slot) => {
+                  const isSlotSelected =
+                    selectedSlot &&
+                    new Date(slot.start).getTime() === new Date(selectedSlot.start).getTime();
+
+                  return (
+                    <button
+                      key={slot.start.toString()}
+                      onClick={() => onSelectSlot(slot)}
+                      className={cn(
+                        'px-3 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all',
+                        isSlotSelected
+                          ? 'border-brand-500 bg-brand-500 text-white shadow-lg shadow-brand-500/30'
+                          : 'border-slate-200 bg-white text-slate-700 hover:border-brand-500 hover:text-brand-600 hover:scale-105'
+                      )}
+                    >
+                      {format(new Date(slot.start), 'HH:mm')}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        };
+
+        return (
+          <div className="border border-slate-200 rounded-2xl p-4 md:p-6 bg-slate-50">
+            <h4 className="text-base font-bold text-slate-900 mb-4">
+              {format(selectedDate, 'M月d日（E）', { locale: ja })}の空き枠
+            </h4>
+            <div className="space-y-4">
+              {renderGroup('午前', morningSlots)}
+              {renderGroup('午後', afternoonSlots)}
+              {renderGroup('夜', eveningSlots)}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
