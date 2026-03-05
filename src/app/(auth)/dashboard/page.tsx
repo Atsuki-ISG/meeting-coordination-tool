@@ -198,6 +198,11 @@ export default function DashboardPage() {
                             <p className={`font-semibold ${eventType.is_active ? 'text-slate-900 group-hover:text-brand-500' : 'text-slate-400'} transition-colors`}>
                               {eventType.title}
                             </p>
+                            {eventType.calendar_title_template && (
+                              <p className={`text-xs ${eventType.is_active ? 'text-slate-400' : 'text-slate-300'} truncate`}>
+                                {eventType.calendar_title_template}
+                              </p>
+                            )}
                             <p className={`text-sm ${eventType.is_active ? 'text-slate-500' : 'text-slate-400'}`}>
                               {eventType.duration_minutes}分
                             </p>

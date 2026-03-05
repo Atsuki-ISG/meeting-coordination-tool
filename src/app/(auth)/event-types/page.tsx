@@ -11,6 +11,7 @@ export default function EventTypesPage() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventTypes = async () => {
@@ -49,6 +50,53 @@ export default function EventTypesPage() {
     await navigator.clipboard.writeText(url);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const duplicateEventType = async (eventType: EventType) => {
+    setDuplicatingId(eventType.id);
+    try {
+      // Fetch members of the original event type
+      const membersRes = await fetch(`/api/event-types/${eventType.id}/members`);
+      const memberIds = membersRes.ok
+        ? (await membersRes.json()).map((m: { member_id: string }) => m.member_id)
+        : [];
+
+      const response = await fetch('/api/event-types', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `${eventType.title}（コピー）`,
+          description: eventType.description || '',
+          durationMinutes: eventType.duration_minutes,
+          memberIds,
+          participationMode: eventType.participation_mode,
+          noteTakerMemberId: eventType.note_taker_member_id,
+          calendarTitleTemplate: eventType.calendar_title_template,
+          bufferMinutes: eventType.buffer_minutes,
+          daysAhead: eventType.days_ahead,
+          minNoticeMinutes: eventType.min_notice_minutes,
+          timeRestrictionType: eventType.time_restriction_type,
+          timeRestrictionPresetId: eventType.time_restriction_preset_id,
+          timeRestrictionCustom: eventType.time_restriction_custom,
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh the list
+        const res = await fetch('/api/event-types');
+        if (res.ok) {
+          setEventTypes(await res.json());
+        }
+      } else {
+        const error = await response.json();
+        alert(error.error || '複製に失敗しました');
+      }
+    } catch (error) {
+      console.error('Failed to duplicate event type:', error);
+      alert('複製に失敗しました');
+    } finally {
+      setDuplicatingId(null);
+    }
   };
 
   if (isLoading) {
@@ -131,6 +179,11 @@ export default function EventTypesPage() {
                       <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${eventType.is_active ? 'bg-brand-500' : 'bg-slate-300'}`} />
                       <div className="min-w-0 flex-1">
                         <h3 className="font-bold text-base md:text-lg text-slate-900 break-words">{eventType.title}</h3>
+                        {eventType.calendar_title_template && (
+                          <p className="text-xs text-slate-400 mt-0.5 truncate">
+                            {eventType.calendar_title_template}
+                          </p>
+                        )}
                         {eventType.description && (
                           <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">{eventType.description}</p>
                         )}
@@ -188,14 +241,33 @@ export default function EventTypesPage() {
                         </button>
                       </Link>
                       {(currentRole === 'admin' || eventType.organizer_id === currentMemberId) && (
-                        <Link href={`/event-types/${eventType.id}`}>
-                          <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-700 text-xs md:text-sm font-semibold hover:border-brand-500 hover:text-brand-600 transition-all">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            <span className="hidden sm:inline">編集</span>
+                        <>
+                          <button
+                            onClick={() => duplicateEventType(eventType)}
+                            disabled={duplicatingId === eventType.id}
+                            className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl bg-slate-100 text-slate-700 text-xs md:text-sm font-semibold hover:bg-slate-200 transition-all disabled:opacity-50"
+                          >
+                            {duplicatingId === eventType.id ? (
+                              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                              </svg>
+                            )}
+                            <span className="hidden sm:inline">複製</span>
                           </button>
-                        </Link>
+                          <Link href={`/event-types/${eventType.id}`}>
+                            <button className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl border-2 border-slate-200 text-slate-700 text-xs md:text-sm font-semibold hover:border-brand-500 hover:text-brand-600 transition-all">
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              <span className="hidden sm:inline">編集</span>
+                            </button>
+                          </Link>
+                        </>
                       )}
                     </div>
                   </div>
