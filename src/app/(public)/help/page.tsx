@@ -373,11 +373,11 @@ export default function HelpPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    <tr><td className="px-4 py-3 font-medium">お名前</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">予約者の名前</td></tr>
-                    <tr><td className="px-4 py-3 font-medium">メールアドレス</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先メールアドレス</td></tr>
-                    <tr><td className="px-4 py-3 font-medium">会社名</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">所属する会社・組織名</td></tr>
-                    <tr><td className="px-4 py-3 font-medium">電話番号</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先電話番号</td></tr>
-                    <tr><td className="px-4 py-3 font-medium">ご相談内容・備考</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">相談したい内容や伝達事項</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">お名前</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">予約者の名前</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">メールアドレス</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先メールアドレス</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">会社名</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">所属する会社・組織名</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">電話番号</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">連絡先電話番号</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">ご相談内容・備考</td><td className="px-4 py-3 text-red-500">必須</td><td className="px-4 py-3 text-slate-600">相談したい内容や伝達事項</td></tr>
                   </tbody>
                 </table>
                 </div>
