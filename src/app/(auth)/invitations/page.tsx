@@ -240,7 +240,7 @@ export default function MemberRequestsPage() {
                             disabled={processingId === request.id}
                             className="bg-green-500 hover:bg-green-600"
                           >
-                            {processingId === request.id ? '処理中...' : '承認'}
+                            {processingId === request.id ? '処理中…' : '承認'}
                           </Button>
                           <button
                             onClick={() => handleReject(request.id)}

@@ -65,9 +65,10 @@ export function BookingForm({
           </label>
           <input
             type="text"
+            autoComplete="name"
             {...register('name')}
             placeholder="山田 太郎"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition text-slate-900 placeholder-slate-400"
           />
           {errors.name && (
             <p className="mt-1.5 text-sm text-red-500">{errors.name.message}</p>
@@ -81,9 +82,11 @@ export function BookingForm({
           </label>
           <input
             type="email"
+            autoComplete="email"
+            spellCheck={false}
             {...register('email')}
             placeholder="you@example.com"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition text-slate-900 placeholder-slate-400"
           />
           {errors.email && (
             <p className="mt-1.5 text-sm text-red-500">{errors.email.message}</p>
@@ -97,9 +100,10 @@ export function BookingForm({
           </label>
           <input
             type="text"
+            autoComplete="organization"
             {...register('companyName')}
             placeholder="株式会社〇〇"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition text-slate-900 placeholder-slate-400"
           />
           {errors.companyName && (
             <p className="mt-1.5 text-sm text-red-500">{errors.companyName.message}</p>
@@ -113,9 +117,10 @@ export function BookingForm({
           </label>
           <input
             type="tel"
+            autoComplete="tel"
             {...register('phoneNumber')}
             placeholder="03-1234-5678"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition text-slate-900 placeholder-slate-400"
           />
           {errors.phoneNumber && (
             <p className="mt-1.5 text-sm text-red-500">{errors.phoneNumber.message}</p>
@@ -131,7 +136,7 @@ export function BookingForm({
             {...register('note')}
             rows={4}
             placeholder="ご相談したい内容や、事前に共有したい情報があればご記入ください"
-            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400 resize-none"
+            className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition text-slate-900 placeholder-slate-400 resize-none"
           />
           {errors.note && (
             <p className="mt-1.5 text-sm text-red-500">{errors.note.message}</p>
@@ -170,7 +175,7 @@ export function BookingForm({
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   />
                 </svg>
-                送信中...
+                送信中…
               </span>
             ) : (
               '予約を確定する'

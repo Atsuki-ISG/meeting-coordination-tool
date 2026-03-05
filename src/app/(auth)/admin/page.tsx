@@ -234,7 +234,7 @@ export default function AdminPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <p className="text-sm text-slate-500">読み込み中…</p>
         </div>
       </div>
     );
@@ -386,7 +386,7 @@ export default function AdminPage() {
                             disabled={processingId === member.id}
                             className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50 text-sm"
                           >
-                            {processingId === member.id ? '処理中...' : '承認'}
+                            {processingId === member.id ? '処理中…' : '承認'}
                           </button>
                           <button
                             onClick={() => updateMemberStatus(member.id, 'suspended')}
@@ -695,7 +695,7 @@ export default function AdminPage() {
                 disabled={processingId === assignModal.memberId}
                 className="flex-1 py-3 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition disabled:opacity-50"
               >
-                {processingId === assignModal.memberId ? '処理中...' : '追加'}
+                {processingId === assignModal.memberId ? '処理中…' : '追加'}
               </button>
             </div>
           </div>

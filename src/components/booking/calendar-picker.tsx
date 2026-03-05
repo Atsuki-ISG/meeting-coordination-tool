@@ -164,7 +164,7 @@ export function CalendarPicker({
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-slate-500">空き状況を確認中...</p>
+          <p className="text-sm text-slate-500">空き状況を確認中…</p>
         </div>
       </div>
     );
@@ -251,7 +251,7 @@ export function CalendarPicker({
                 onClick={() => handleDateClick(dayInfo)}
                 disabled={!hasSlots || !isCurrentMonth || isPast}
                 className={cn(
-                  'relative min-h-[80px] md:min-h-[90px] p-1 md:p-2 border-b border-r border-slate-100 transition-all text-left flex flex-col',
+                  'relative min-h-[80px] md:min-h-[90px] p-1 md:p-2 border-b border-r border-slate-100 transition-colors text-left flex flex-col',
                   isCurrentMonth ? 'bg-white' : 'bg-slate-50',
                   hasSlots && isCurrentMonth && !isPast
                     ? 'hover:bg-brand-50 cursor-pointer'
@@ -319,7 +319,7 @@ export function CalendarPicker({
           if (groupSlots.length === 0) return null;
           return (
             <div>
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">{label}</p>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{label}</p>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
                 {groupSlots.map((slot) => {
                   const isSlotSelected =

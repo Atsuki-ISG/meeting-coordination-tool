@@ -156,7 +156,7 @@ export function Sidebar() {
             <span className="font-bold text-xl tracking-tight text-slate-900 block leading-none">
               {team?.name || 'MeetFlow'}
             </span>
-            <span className="text-[10px] font-bold text-slate-400 tracking-[0.2em] uppercase mt-1 block">Workspace</span>
+            <span className="text-[11px] font-bold text-slate-500 tracking-[0.15em] uppercase mt-1 block">Workspace</span>
           </div>
         </Link>
       </div>

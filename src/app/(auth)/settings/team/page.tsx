@@ -387,7 +387,7 @@ export default function TeamSettingsPage() {
                         disabled={isSavingName || !teamName.trim()}
                         className="px-4 py-2 bg-brand-500 text-white font-medium rounded-xl hover:bg-brand-600 transition disabled:opacity-50"
                       >
-                        {isSavingName ? '保存中...' : '保存'}
+                        {isSavingName ? '保存中…' : '保存'}
                       </button>
                       <button
                         onClick={() => {
@@ -753,7 +753,7 @@ export default function TeamSettingsPage() {
                     disabled={isSavingPreset || !presetForm.name.trim() || presetForm.days.length === 0}
                     className="flex-1 px-4 py-3 bg-brand-500 text-white font-semibold rounded-xl hover:bg-brand-600 transition disabled:opacity-50"
                   >
-                    {isSavingPreset ? '保存中...' : editingPreset ? '更新' : '作成'}
+                    {isSavingPreset ? '保存中…' : editingPreset ? '更新' : '作成'}
                   </button>
                 </div>
               </div>
@@ -812,7 +812,7 @@ export default function TeamSettingsPage() {
                     disabled={isDeletingTeam}
                     className="flex-1 px-4 py-3 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition disabled:opacity-50"
                   >
-                    {isDeletingTeam ? '削除中...' : '削除する'}
+                    {isDeletingTeam ? '削除中…' : '削除する'}
                   </button>
                 </div>
               </div>

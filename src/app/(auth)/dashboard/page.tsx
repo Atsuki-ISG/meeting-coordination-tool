@@ -80,7 +80,7 @@ export default function DashboardPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <p className="text-sm text-slate-500">読み込み中…</p>
         </div>
       </div>
     );
@@ -100,13 +100,11 @@ export default function DashboardPage() {
               <p className="text-slate-500 font-medium text-sm md:text-base">{format(new Date(), 'yyyy年M月d日（E）', { locale: ja })}</p>
             </div>
             <div className="flex items-center gap-4">
-              <Link href="/event-types/new">
-                <button className="flex items-center gap-2 px-5 md:px-6 py-3 md:py-3.5 rounded-full text-white font-bold text-sm shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95 bg-gradient-to-r from-brand-500 to-brand-600">
+              <Link href="/event-types/new" className="flex items-center gap-2 px-5 md:px-6 py-3 md:py-3.5 rounded-full text-white font-bold text-sm shadow-xl shadow-brand-500/30 hover:shadow-brand-500/50 hover:scale-105 transition-all active:scale-95 bg-gradient-to-r from-brand-500 to-brand-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
                   </svg>
                   <span>新規作成</span>
-                </button>
               </Link>
             </div>
           </header>
@@ -182,8 +180,8 @@ export default function DashboardPage() {
                       </svg>
                     </div>
                     <p className="text-slate-500">予約タイプがまだありません</p>
-                    <Link href="/event-types/new">
-                      <Button variant="outline" className="mt-4">
+                    <Link href="/event-types/new" className="inline-block mt-4">
+                      <Button variant="outline">
                         最初の予約タイプを作成
                       </Button>
                     </Link>
@@ -199,7 +197,7 @@ export default function DashboardPage() {
                               {eventType.title}
                             </p>
                             {eventType.calendar_title_template && (
-                              <p className={`text-xs ${eventType.is_active ? 'text-slate-400' : 'text-slate-300'} truncate flex items-center gap-1 mt-0.5`}>
+                              <p className={`text-xs ${eventType.is_active ? 'text-slate-500' : 'text-slate-400'} truncate flex items-center gap-1 mt-0.5`}>
                                 <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
@@ -235,12 +233,10 @@ export default function DashboardPage() {
                                 </>
                               )}
                             </button>
-                            <Link href={`/event-types/${eventType.id}`}>
-                              <button className="p-2 rounded-lg hover:bg-slate-100 transition">
+                            <Link href={`/event-types/${eventType.id}`} aria-label={`${eventType.title}を編集`} className="p-2 rounded-lg hover:bg-slate-100 transition">
                                 <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                 </svg>
-                              </button>
                             </Link>
                           </div>
                         </div>
@@ -248,10 +244,8 @@ export default function DashboardPage() {
                     ))}
                     {eventTypes.length > 5 && (
                       <div className="p-4">
-                        <Link href="/event-types">
-                          <button className="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition">
+                        <Link href="/event-types" className="block w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition text-center">
                             他 {eventTypes.length - 5} 件を表示
-                          </button>
                         </Link>
                       </div>
                     )}
@@ -311,10 +305,8 @@ export default function DashboardPage() {
                     ))}
                     {upcomingBookings.length > 5 && (
                       <div className="p-4">
-                        <Link href="/bookings">
-                          <button className="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition">
+                        <Link href="/bookings" className="block w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition text-center">
                             他 {upcomingBookings.length - 5} 件を表示
-                          </button>
                         </Link>
                       </div>
                     )}

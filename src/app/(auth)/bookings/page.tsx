@@ -78,7 +78,7 @@ export default function BookingsPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <p className="text-sm text-slate-500">読み込み中…</p>
         </div>
       </div>
     );
@@ -148,7 +148,7 @@ export default function BookingsPage() {
             <div className="space-y-3 md:space-y-0 md:bg-white md:rounded-3xl md:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] md:border md:border-slate-100">
               <div className="md:divide-y md:divide-slate-100">
                 {bookings.map((booking, index) => (
-                  <div key={booking.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 md:rounded-none md:border-0 md:shadow-none md:hover:shadow-none p-4 md:p-6 md:hover:bg-slate-50 transition-all">
+                  <div key={booking.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 md:rounded-none md:border-0 md:shadow-none md:hover:shadow-none p-4 md:p-6 md:hover:bg-slate-50 transition-[shadow,border-color,background-color]">
                     <div className="flex items-start gap-3 md:gap-4">
                       <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br ${avatarColors[index % avatarColors.length]} flex items-center justify-center text-white font-bold text-base md:text-lg shadow-lg flex-shrink-0`}>
                         {booking.requester_name.charAt(0).toUpperCase()}

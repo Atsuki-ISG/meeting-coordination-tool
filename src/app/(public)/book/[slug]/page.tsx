@@ -199,9 +199,9 @@ export default function BookingPage() {
         {/* Main Card */}
         <div className="bg-white rounded-3xl shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden">
           {/* Event Info Header */}
-          <div className="p-8 border-b border-slate-100">
+          <div className="p-5 md:p-8 border-b border-slate-100">
             <h1 className="text-2xl font-bold text-slate-900 mb-2">
-              {eventType?.title || '読み込み中...'}
+              {eventType?.title || '読み込み中…'}
             </h1>
             {eventType?.description && (
               <p className="text-slate-500 mb-4">{eventType.description}</p>
@@ -217,7 +217,7 @@ export default function BookingPage() {
           </div>
 
           {/* Content */}
-          <div className="p-8">
+          <div className="p-5 md:p-8">
             {step === 'select-time' && (
               <CalendarPicker
                 slots={slots}

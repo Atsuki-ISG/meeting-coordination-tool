@@ -222,7 +222,7 @@ export default function TeamPage() {
                         disabled={!!switchingId}
                         className="px-4 py-2 text-sm font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition disabled:opacity-50"
                       >
-                        {switchingId === team.id ? '切り替え中...' : '切り替える'}
+                        {switchingId === team.id ? '切り替え中…' : '切り替える'}
                       </button>
                     )}
                   </div>
@@ -264,7 +264,7 @@ export default function TeamPage() {
                       キャンセル
                     </button>
                     <button type="submit" disabled={isCreating || !teamName.trim()} className="flex-1 py-2.5 rounded-xl bg-brand-500 text-white font-semibold hover:bg-brand-600 transition disabled:opacity-50 text-sm">
-                      {isCreating ? '作成中...' : '作成する'}
+                      {isCreating ? '作成中…' : '作成する'}
                     </button>
                   </div>
                 </form>
@@ -303,7 +303,7 @@ export default function TeamPage() {
                       キャンセル
                     </button>
                     <button type="submit" disabled={isJoining || inviteCode.length !== 8} className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 transition disabled:opacity-50 text-sm">
-                      {isJoining ? '参加中...' : '参加する'}
+                      {isJoining ? '参加中…' : '参加する'}
                     </button>
                   </div>
                 </form>

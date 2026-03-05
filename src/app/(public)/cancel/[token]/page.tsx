@@ -18,7 +18,7 @@ function CancelContent() {
 
   const handleCancel = async () => {
     if (!bookingId) {
-      setError('Invalid cancel link');
+      setError('無効なキャンセルリンクです');
       setStep('error');
       return;
     }
@@ -39,12 +39,12 @@ function CancelContent() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to cancel booking');
+        throw new Error(result.error || 'キャンセルに失敗しました');
       }
 
       setStep('success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err instanceof Error ? err.message : 'エラーが発生しました');
       setStep('error');
     }
   };
@@ -53,14 +53,14 @@ function CancelContent() {
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle>
-          {step === 'confirm' && 'Cancel Booking'}
-          {step === 'processing' && 'Canceling...'}
-          {step === 'success' && 'Booking Canceled'}
-          {step === 'error' && 'Error'}
+          {step === 'confirm' && '予約のキャンセル'}
+          {step === 'processing' && 'キャンセル中…'}
+          {step === 'success' && 'キャンセル完了'}
+          {step === 'error' && 'エラー'}
         </CardTitle>
         {step === 'confirm' && (
           <CardDescription>
-            Are you sure you want to cancel this booking? All attendees will be notified.
+            この予約をキャンセルしますか？参加者全員に通知されます。
           </CardDescription>
         )}
       </CardHeader>
@@ -68,8 +68,7 @@ function CancelContent() {
         {step === 'confirm' && (
           <div className="space-y-4">
             <div className="rounded-lg bg-amber-50 p-4 text-sm text-amber-800">
-              This action cannot be undone. If you need to reschedule, please cancel
-              and create a new booking.
+              この操作は取り消せません。日程を変更したい場合は、キャンセル後に新しい予約を作成してください。
             </div>
             <div className="flex gap-3">
               <Button
@@ -77,14 +76,14 @@ function CancelContent() {
                 className="flex-1"
                 onClick={() => window.history.back()}
               >
-                Go Back
+                戻る
               </Button>
               <Button
                 variant="danger"
                 className="flex-1"
                 onClick={handleCancel}
               >
-                Cancel Booking
+                予約をキャンセル
               </Button>
             </div>
           </div>
@@ -93,7 +92,7 @@ function CancelContent() {
         {step === 'processing' && (
           <div className="flex flex-col items-center py-8">
             <svg
-              className="h-8 w-8 animate-spin text-blue-600"
+              className="h-8 w-8 animate-spin text-brand-500"
               fill="none"
               viewBox="0 0 24 24"
             >
@@ -112,7 +111,7 @@ function CancelContent() {
               />
             </svg>
             <p className="mt-4 text-sm text-slate-500">
-              Processing cancellation...
+              キャンセルを処理しています…
             </p>
           </div>
         )}
@@ -134,8 +133,8 @@ function CancelContent() {
                 />
               </svg>
             </div>
-            <p className="text-slate-600">
-              Your booking has been canceled successfully. All attendees have been notified.
+            <p className="text-slate-700">
+              予約がキャンセルされました。参加者全員に通知が送信されます。
             </p>
           </div>
         )}
@@ -157,13 +156,13 @@ function CancelContent() {
                 />
               </svg>
             </div>
-            <p className="text-slate-600">{error}</p>
+            <p className="text-slate-700">{error}</p>
             <Button
               variant="outline"
               className="mt-4"
               onClick={() => setStep('confirm')}
             >
-              Try Again
+              もう一度試す
             </Button>
           </div>
         )}
@@ -178,7 +177,7 @@ export default function CancelPage() {
       <Suspense fallback={
         <Card className="w-full max-w-md">
           <CardContent className="py-8 text-center">
-            <p className="text-slate-500">Loading...</p>
+            <p className="text-slate-500">読み込み中…</p>
           </CardContent>
         </Card>
       }>

@@ -114,7 +114,7 @@ export default function SettingsPage() {
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             />
           </svg>
-          <p className="text-sm text-slate-500">読み込み中...</p>
+          <p className="text-sm text-slate-500">読み込み中…</p>
         </div>
       </div>
     );
@@ -128,7 +128,7 @@ export default function SettingsPage() {
         {/* Main Content */}
         <main className="flex-1 md:ml-72 p-4 pt-20 md:p-10 md:pt-10">
           {/* Header */}
-          <header className="sticky top-0 -mx-10 px-10 py-6 bg-slate-50/80 backdrop-blur-md z-20 flex justify-between items-end mb-8">
+          <header className="sticky top-0 -mx-4 md:-mx-10 px-4 md:px-10 py-4 md:py-6 bg-slate-50/80 backdrop-blur-md z-20 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6 md:mb-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-1">設定</h1>
               <p className="text-slate-500 font-medium">予約を受け付ける時間帯を設定</p>
@@ -144,7 +144,7 @@ export default function SettingsPage() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  <span>保存中...</span>
+                  <span>保存中…</span>
                 </>
               ) : (
                 <>
@@ -189,7 +189,7 @@ export default function SettingsPage() {
               {["1", "2", "3", "4", "5", "6", "0"].map((day) => (
                 <div
                   key={day}
-                  className={`flex items-center gap-6 p-6 transition-colors ${
+                  className={`flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-4 md:p-6 transition-colors ${
                     availability[day].enabled ? 'bg-white' : 'bg-slate-50/50'
                   }`}
                 >
@@ -201,7 +201,7 @@ export default function SettingsPage() {
                         onChange={(e) => updateDay(day, { enabled: e.target.checked })}
                         className="sr-only peer"
                       />
-                      <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+                      <div className="w-11 h-6 bg-slate-200 rounded-full peer peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
                     </div>
                     <span className={`font-semibold ${availability[day].enabled ? 'text-slate-900' : 'text-slate-400'}`}>
                       {DAY_NAMES[day]}
@@ -219,13 +219,13 @@ export default function SettingsPage() {
                             onChange={(e) => updateDay(day, { allDay: e.target.checked })}
                             className="sr-only peer"
                           />
-                          <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
+                          <div className="w-9 h-5 bg-slate-200 rounded-full peer peer-focus-visible:ring-2 peer-focus-visible:ring-brand-500/30 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-500"></div>
                         </div>
                         <span className="text-sm font-medium text-slate-600">終日</span>
                       </label>
 
                       {availability[day].allDay ? (
-                        <span className="text-sm text-slate-400 font-medium">
+                        <span className="text-sm text-slate-500 font-medium">
                           Googleカレンダーの空き時間のみ
                         </span>
                       ) : (
@@ -233,7 +233,7 @@ export default function SettingsPage() {
                           <select
                             value={availability[day].startTime}
                             onChange={(e) => updateDay(day, { startTime: e.target.value })}
-                            className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none transition-colors"
+                            className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition-colors"
                           >
                             {TIME_OPTIONS.map((time) => (
                               <option key={time} value={time}>
@@ -245,7 +245,7 @@ export default function SettingsPage() {
                           <select
                             value={availability[day].endTime}
                             onChange={(e) => updateDay(day, { endTime: e.target.value })}
-                            className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none transition-colors"
+                            className="rounded-xl border-2 border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/20 transition-colors"
                           >
                             {TIME_OPTIONS.map((time) => (
                               <option key={time} value={time}>
@@ -279,7 +279,7 @@ export default function SettingsPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
-                    保存中...
+                    保存中…
                   </>
                 ) : '設定を保存'}
               </button>
