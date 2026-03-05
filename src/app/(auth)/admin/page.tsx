@@ -366,10 +366,10 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   pendingMembers.map((member) => (
-                    <div key={member.id} className="p-6 hover:bg-slate-50/50 transition">
-                      <div className="flex items-center justify-between">
+                    <div key={member.id} className="px-4 py-5 md:px-8 md:py-6 hover:bg-slate-50/50 transition">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg">
+                          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-base md:text-lg flex-shrink-0">
                             {member.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
@@ -380,18 +380,18 @@ export default function AdminPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 ml-14 sm:ml-0">
                           <button
                             onClick={() => updateMemberStatus(member.id, 'active')}
                             disabled={processingId === member.id}
-                            className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                            className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50 text-sm"
                           >
                             {processingId === member.id ? '処理中...' : '承認'}
                           </button>
                           <button
                             onClick={() => updateMemberStatus(member.id, 'suspended')}
                             disabled={processingId === member.id}
-                            className="px-4 py-2 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition disabled:opacity-50"
+                            className="px-4 py-2 bg-red-500 text-white font-semibold rounded-xl hover:bg-red-600 transition disabled:opacity-50 text-sm"
                           >
                             拒否
                           </button>
@@ -409,10 +409,10 @@ export default function AdminPage() {
                   </div>
                 ) : (
                   allMembers.map((member) => (
-                    <div key={member.id} className="p-6 hover:bg-slate-50/50 transition">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className={`w-12 h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg ${
+                    <div key={member.id} className="px-4 py-5 md:px-8 md:py-6 hover:bg-slate-50/50 transition">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:justify-between">
+                        <div className="flex items-start gap-4">
+                          <div className={`w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-base md:text-lg flex-shrink-0 ${
                             member.status === 'active'
                               ? 'from-brand-400 to-brand-600'
                               : member.status === 'pending'
@@ -422,7 +422,7 @@ export default function AdminPage() {
                             {member.name.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <p className="font-semibold text-slate-900">{member.name}</p>
                               {member.is_system_admin && (
                                 <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
@@ -431,7 +431,7 @@ export default function AdminPage() {
                               )}
                             </div>
                             <p className="text-sm text-slate-500">{member.email}</p>
-                            <div className="mt-1">
+                            <div className="mt-1.5">
                               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                                 member.status === 'active'
                                   ? 'bg-green-100 text-green-700'
@@ -442,21 +442,21 @@ export default function AdminPage() {
                                 {member.status === 'active' ? '有効' : member.status === 'pending' ? '承認待ち' : '停止中'}
                               </span>
                             </div>
-                            <div className="mt-1 flex flex-col gap-1">
+                            <div className="mt-1.5 flex flex-wrap gap-1">
                               {member.team_memberships.length > 0 ? (
                                 member.team_memberships.map((tm) => (
-                                  <span key={tm.id} className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full w-fit">
+                                  <span key={tm.id} className="text-xs text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
                                     {tm.name}
                                     {tm.role === 'admin' && <span className="ml-1 text-brand-600 font-semibold">管理者</span>}
                                   </span>
                                 ))
                               ) : (
-                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full w-fit">チーム未所属</span>
+                                <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">チーム未所属</span>
                               )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap ml-14 sm:ml-0 sm:flex-shrink-0">
                           <button
                             onClick={() => openAssignModal(member)}
                             disabled={processingId === member.id}
@@ -489,7 +489,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => updateMemberStatus(member.id, 'active')}
                               disabled={processingId === member.id}
-                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50 text-sm"
                             >
                               再有効化
                             </button>
@@ -497,7 +497,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => updateMemberStatus(member.id, 'active')}
                               disabled={processingId === member.id}
-                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50"
+                              className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition disabled:opacity-50 text-sm"
                             >
                               承認
                             </button>

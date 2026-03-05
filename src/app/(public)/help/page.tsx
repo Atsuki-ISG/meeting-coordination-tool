@@ -428,16 +428,19 @@ export default function HelpPage() {
             よくある質問
           </h2>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             {faqs.map((faq, i) => (
-              <div key={i} className="border border-slate-200 rounded-2xl overflow-hidden">
-                <div className="bg-slate-50 px-6 py-4">
+              <details key={i} className="group border border-slate-200 rounded-2xl overflow-hidden">
+                <summary className="bg-slate-50 px-6 py-4 cursor-pointer list-none flex items-center justify-between gap-4 hover:bg-slate-100 transition-colors">
                   <p className="font-semibold text-slate-800">Q. {faq.q}</p>
-                </div>
-                <div className="px-6 py-4">
+                  <svg className="w-5 h-5 text-slate-400 flex-shrink-0 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </summary>
+                <div className="px-6 py-4 border-t border-slate-100">
                   <p className="text-slate-600 text-sm leading-relaxed">A. {faq.a}</p>
                 </div>
-              </div>
+              </details>
             ))}
           </div>
         </section>
