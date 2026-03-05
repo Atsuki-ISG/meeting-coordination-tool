@@ -12,7 +12,6 @@ export default function EventTypesPage() {
   const [currentMemberId, setCurrentMemberId] = useState<string | null>(null);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
   const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEventTypes = async () => {
@@ -177,126 +176,23 @@ export default function EventTypesPage() {
                     key={eventType.id}
                     className="bg-white rounded-2xl shadow-[0_10px_30px_-10px_rgba(0,0,0,0.05)] border border-slate-100 p-4 md:p-6 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300"
                   >
+                    {/* Info area */}
                     <div className="flex items-start gap-3 md:gap-4">
                       <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 ${eventType.is_active ? 'bg-brand-500' : 'bg-slate-300'}`} />
                       <div className="min-w-0 flex-1">
-                        {/* Title + Calendar Title */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-bold text-base md:text-lg text-slate-900 break-words">{eventType.title}</h3>
-                            {eventType.calendar_title_template && (
-                              <p className="text-xs text-slate-400 mt-0.5 truncate flex items-center gap-1">
-                                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                {eventType.calendar_title_template}
-                              </p>
-                            )}
-                          </div>
-
-                          {/* Actions: icon buttons + dropdown */}
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            {/* Copy link */}
-                            <button
-                              onClick={() => copyBookingLink(eventType.id, eventType.slug)}
-                              title="リンクをコピー"
-                              className={`p-2 rounded-lg transition-all ${
-                                copiedId === eventType.id
-                                  ? 'bg-brand-500 text-white'
-                                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                              }`}
-                            >
-                              {copiedId === eventType.id ? (
-                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : (
-                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                </svg>
-                              )}
-                            </button>
-
-                            {/* Edit (visible only for admin/owner) */}
-                            {canEdit && (
-                              <Link href={`/event-types/${eventType.id}`}>
-                                <button
-                                  title="編集"
-                                  className="p-2 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
-                                >
-                                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                  </svg>
-                                </button>
-                              </Link>
-                            )}
-
-                            {/* More menu */}
-                            <div className="relative">
-                              <button
-                                onClick={() => setOpenMenuId(openMenuId === eventType.id ? null : eventType.id)}
-                                title="その他"
-                                className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
-                              >
-                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                                </svg>
-                              </button>
-
-                              {/* Dropdown */}
-                              {openMenuId === eventType.id && (
-                                <>
-                                  <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)} />
-                                  <div className="absolute right-0 top-full mt-1 z-40 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150">
-                                    <Link
-                                      href={`/book/${eventType.slug}`}
-                                      target="_blank"
-                                      onClick={() => setOpenMenuId(null)}
-                                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition"
-                                    >
-                                      <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                      </svg>
-                                      予約ページを開く
-                                    </Link>
-                                    {canEdit && (
-                                      <>
-                                        <button
-                                          onClick={() => {
-                                            setOpenMenuId(null);
-                                            duplicateEventType(eventType);
-                                          }}
-                                          disabled={duplicatingId === eventType.id}
-                                          className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition disabled:opacity-50"
-                                        >
-                                          {duplicatingId === eventType.id ? (
-                                            <svg className="w-4 h-4 text-slate-400 animate-spin" fill="none" viewBox="0 0 24 24">
-                                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                            </svg>
-                                          ) : (
-                                            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
-                                            </svg>
-                                          )}
-                                          複製する
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Description */}
+                        <h3 className="font-bold text-base md:text-lg text-slate-900 break-words">{eventType.title}</h3>
+                        {eventType.calendar_title_template && (
+                          <p className="text-xs text-slate-400 mt-0.5 truncate flex items-center gap-1">
+                            <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span className="truncate">{eventType.calendar_title_template}</span>
+                          </p>
+                        )}
                         {eventType.description && (
                           <p className="text-sm text-slate-500 mt-1 line-clamp-2">{eventType.description}</p>
                         )}
-
-                        {/* Badges */}
-                        <div className="flex flex-wrap items-center gap-2 mt-2.5">
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -313,6 +209,82 @@ export default function EventTypesPage() {
                           </span>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Actions row - separated below for clarity */}
+                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-slate-100 ml-6 md:ml-7">
+                      {/* Copy link - always visible */}
+                      <button
+                        onClick={() => copyBookingLink(eventType.id, eventType.slug)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          copiedId === eventType.id
+                            ? 'bg-brand-500 text-white'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {copiedId === eventType.id ? (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            コピー完了
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                            リンクをコピー
+                          </>
+                        )}
+                      </button>
+
+                      <span className="w-px h-4 bg-slate-200" />
+
+                      {/* Preview page */}
+                      <Link href={`/book/${eventType.slug}`} target="_blank">
+                        <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          プレビュー
+                        </button>
+                      </Link>
+
+                      {canEdit && (
+                        <>
+                          <span className="w-px h-4 bg-slate-200" />
+
+                          {/* Edit */}
+                          <Link href={`/event-types/${eventType.id}`}>
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-brand-600 transition-all">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              編集
+                            </button>
+                          </Link>
+
+                          {/* Duplicate */}
+                          <button
+                            onClick={() => duplicateEventType(eventType)}
+                            disabled={duplicatingId === eventType.id}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-all disabled:opacity-50"
+                          >
+                            {duplicatingId === eventType.id ? (
+                              <svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                              </svg>
+                            )}
+                            複製
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
