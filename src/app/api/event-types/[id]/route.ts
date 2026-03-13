@@ -15,6 +15,8 @@ const updateEventTypeSchema = z.object({
   participationMode: z.enum(['all_required', 'any_available']).optional(),
   noteTakerMemberId: z.string().uuid().optional().nullable(),
   calendarTitleTemplate: z.string().optional(),
+  guestTitleTemplate: z.string().optional(),
+  guestDescriptionTemplate: z.string().optional(),
   timeRestrictionType: z.enum(['none', 'preset', 'custom']).optional(),
   timeRestrictionPresetId: z.string().uuid().optional().nullable(),
   timeRestrictionCustom: z.object({
@@ -86,6 +88,8 @@ export async function PATCH(
     if (validatedData.participationMode !== undefined) updateData.participation_mode = validatedData.participationMode;
     if (validatedData.noteTakerMemberId !== undefined) updateData.note_taker_member_id = validatedData.noteTakerMemberId;
     if (validatedData.calendarTitleTemplate !== undefined) updateData.calendar_title_template = validatedData.calendarTitleTemplate;
+    if (validatedData.guestTitleTemplate !== undefined) updateData.guest_title_template = validatedData.guestTitleTemplate;
+    if (validatedData.guestDescriptionTemplate !== undefined) updateData.guest_description_template = validatedData.guestDescriptionTemplate;
     if (validatedData.timeRestrictionType !== undefined) updateData.time_restriction_type = validatedData.timeRestrictionType;
     if (validatedData.timeRestrictionPresetId !== undefined) updateData.time_restriction_preset_id = validatedData.timeRestrictionPresetId;
     if (validatedData.timeRestrictionCustom !== undefined) updateData.time_restriction_custom = validatedData.timeRestrictionCustom;

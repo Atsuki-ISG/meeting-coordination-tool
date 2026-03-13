@@ -185,6 +185,8 @@ export default function HelpPage() {
                     <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択（全員から選択可能）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">議事録担当</td><td className="px-4 py-3 text-slate-600">チーム設定で「議事録担当」に指定されたメンバーから選択。カレンダー招待に自動追加されます（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">カレンダータイトル</td><td className="px-4 py-3 text-slate-600">チーム内部のカレンダーに表示されるタイトルをカスタマイズ。変数ボタンをクリックして挿入でき、プレビューで確認できます（ゲストには表示されません）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">ゲスト向けタイトル</td><td className="px-4 py-3 text-slate-600">予約者のカレンダーに表示されるイベントタイトルをカスタマイズ。変数ボタンで挿入でき、プレビューで確認できます（デフォルト: メニュー名）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">ゲスト向けメモ欄</td><td className="px-4 py-3 text-slate-600">予約者のカレンダーに表示されるイベント説明をカスタマイズ。Google Meetリンクなどを含めることができます（デフォルト: Meet リンク）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">予約可能時間帯の制限</td><td className="px-4 py-3 text-slate-600">「すべての空き時間」「テンプレートから選択」「曜日・時間を指定」から選択。メンバーの可用性設定との共通部分が予約可能枠になります</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">予約を受け付ける</td><td className="px-4 py-3 text-slate-600">トグルで有効/無効を切り替え。無効にすると予約ページにアクセスできなくなります（デフォルト: 有効）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">詳細設定</td><td className="px-4 py-3 text-slate-600">折りたたみ内に「公開期間（1〜90日、デフォルト14日）」「最低予約猶予（なし〜24時間、デフォルト1時間）」「前後のバッファ（なし〜60分、デフォルトなし）」を設定できます</td></tr>
@@ -390,11 +392,11 @@ export default function HelpPage() {
                 <p className="font-semibold text-amber-800 mb-2">確定後に表示される情報</p>
                 <ul className="space-y-1 text-amber-700">
                   <li>• 予約日時</li>
-                  <li>• Google Meet リンク（オンライン会議用）</li>
+                  <li>• Google Meet リンク（クリックでそのまま会議に参加可能）</li>
                   <li>• キャンセル URL</li>
                 </ul>
               </div>
-              <Note>キャンセル URL は後で使用するため、控えておいてください。</Note>
+              <Note>Google Meet リンクはカレンダー招待にも含まれています。キャンセル URL は後で使用するため、控えておいてください。</Note>
             </SubSection>
           </div>
 

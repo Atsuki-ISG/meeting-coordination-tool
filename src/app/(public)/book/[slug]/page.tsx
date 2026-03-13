@@ -31,6 +31,7 @@ export default function BookingPage() {
   const [bookingResult, setBookingResult] = useState<{
     id: string;
     cancelUrl: string;
+    meetLink?: string;
   } | null>(null);
 
   // Fetch event type and availability
@@ -114,6 +115,7 @@ export default function BookingPage() {
       setBookingResult({
         id: result.booking.id,
         cancelUrl: result.cancelUrl,
+        meetLink: result.meetLink,
       });
       setStep('confirmed');
     } catch (err) {
@@ -248,7 +250,7 @@ export default function BookingPage() {
                     </svg>
                   </div>
                   <h2 className="text-xl font-bold text-slate-900">予約が確定しました</h2>
-                  <p className="text-slate-500 mt-2">確認メールとカレンダー招待をお送りしました。</p>
+                  <p className="text-slate-500 mt-2">カレンダー招待をお送りしました。</p>
                 </div>
 
                 {/* Booking Details */}
@@ -263,6 +265,30 @@ export default function BookingPage() {
                     {format(selectedSlot.end, 'HH:mm', { locale: ja })}
                   </p>
                 </div>
+
+                {/* Google Meet Link */}
+                {bookingResult.meetLink && (
+                  <div className="bg-green-50 border border-green-200 rounded-xl p-5">
+                    <h4 className="font-medium text-green-800 flex items-center gap-2">
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+                      </svg>
+                      Google Meet
+                    </h4>
+                    <a
+                      href={bookingResult.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-green-100 text-green-800 text-sm font-medium hover:bg-green-200 transition-colors break-all"
+                    >
+                      {bookingResult.meetLink}
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                    <p className="text-xs text-green-600 mt-2">このリンクはカレンダー招待にも含まれています</p>
+                  </div>
+                )}
 
                 {/* Cancel Info */}
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">

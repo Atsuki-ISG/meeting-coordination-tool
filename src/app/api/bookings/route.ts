@@ -269,14 +269,32 @@ export async function POST(request: NextRequest) {
       addMeetLink: true,
     });
 
-    // --- イベント2: ゲスト用（備考なし、Meet リンクのみ）---
-    const guestDescription = meetLink
-      ? `Google Meet: ${meetLink}`
-      : undefined;
+    // --- イベント2: ゲスト用（テンプレートで生成）---
+    const applyGuestTemplate = (template: string) =>
+      template
+        .replace('{予約者名}', validatedData.name)
+        .replace('{メール}', validatedData.email)
+        .replace('{メニュー名}', eventType.title)
+        .replace('{会社名}', validatedData.companyName)
+        .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
+        .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
+        .replace('{備考}', validatedData.note.substring(0, 50))
+        .replace('{meet_link}', meetLink || '')
+        // Legacy English variables
+        .replace('{guest_name}', validatedData.name)
+        .replace('{guest_email}', validatedData.email)
+        .replace('{event_type}', eventType.title)
+        .replace('{company_name}', validatedData.companyName)
+        .replace('{date}', slot.start.toLocaleDateString('ja-JP'))
+        .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
+        .replace('{notes}', validatedData.note.substring(0, 50));
+
+    const guestTitle = applyGuestTemplate(eventType.guest_title_template || '{メニュー名}');
+    const guestDescription = applyGuestTemplate(eventType.guest_description_template || '{meet_link}') || undefined;
 
     try {
       await createCalendarEvent(calendar, {
-        summary: eventType.title,
+        summary: guestTitle,
         description: guestDescription,
         start: slot.start,
         end: slot.end,

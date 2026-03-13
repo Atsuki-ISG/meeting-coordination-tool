@@ -65,6 +65,8 @@ export default function NewEventTypePage() {
   const [participationMode, setParticipationMode] = useState<'all_required' | 'any_available'>('all_required');
   const [noteTakerMemberId, setNoteTakerMemberId] = useState<string | null>(null);
   const [calendarTitleTemplate, setCalendarTitleTemplate] = useState('{メニュー名} - {予約者名}');
+  const [guestTitleTemplate, setGuestTitleTemplate] = useState('{メニュー名}');
+  const [guestDescriptionTemplate, setGuestDescriptionTemplate] = useState('{meet_link}');
   const [timeRestrictionType, setTimeRestrictionType] = useState<'none' | 'preset' | 'custom'>('none');
   const [timeRestrictionPresetId, setTimeRestrictionPresetId] = useState<string | null>(null);
   const [timeRestrictionCustom, setTimeRestrictionCustom] = useState({ days: [1, 2, 3, 4, 5], start_time: '09:00', end_time: '17:00' });
@@ -158,6 +160,8 @@ export default function NewEventTypePage() {
           participationMode,
           noteTakerMemberId,
           calendarTitleTemplate,
+          guestTitleTemplate,
+          guestDescriptionTemplate,
           timeRestrictionType,
           timeRestrictionPresetId: timeRestrictionType === 'preset' ? timeRestrictionPresetId : null,
           timeRestrictionCustom: timeRestrictionType === 'custom' ? timeRestrictionCustom : null,
@@ -436,6 +440,120 @@ export default function NewEventTypePage() {
                     <p className="text-xs text-slate-400 mb-1">プレビュー</p>
                     <p className="text-sm font-medium text-slate-700">
                       {calendarTitleTemplate
+                        .replace('{予約者名}', '山田太郎')
+                        .replace('{メール}', 'yamada@example.com')
+                        .replace('{メニュー名}', watch('title') || '初回相談')
+                        .replace('{会社名}', '株式会社〇〇')
+                        .replace('{日付}', '2026/2/20')
+                        .replace('{時刻}', '14:00')
+                        .replace('{備考}', 'サービスについて相談')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Guest Title Template */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  ゲスト向けタイトル
+                  <span className="ml-1 text-xs font-normal text-slate-400">相手のカレンダーに表示されます</span>
+                </label>
+                <input
+                  id="guestTitleTemplateNew"
+                  type="text"
+                  value={guestTitleTemplate}
+                  onChange={(e) => setGuestTitleTemplate(e.target.value)}
+                  placeholder="{メニュー名}"
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400"
+                />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {([
+                    { var: '{予約者名}', label: '予約者名' },
+                    { var: '{メニュー名}', label: 'メニュー名' },
+                    { var: '{会社名}', label: '会社名' },
+                    { var: '{日付}', label: '日付' },
+                    { var: '{時刻}', label: '時刻' },
+                  ] as const).map(({ var: v, label }) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => {
+                        const input = document.getElementById('guestTitleTemplateNew') as HTMLInputElement;
+                        const pos = input?.selectionStart ?? guestTitleTemplate.length;
+                        setGuestTitleTemplate(
+                          guestTitleTemplate.slice(0, pos) + v + guestTitleTemplate.slice(pos)
+                        );
+                        setTimeout(() => { input?.focus(); input?.setSelectionRange(pos + v.length, pos + v.length); }, 0);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-600 text-xs font-medium border border-brand-200 hover:bg-brand-100 transition cursor-pointer"
+                    >
+                      + {label}
+                    </button>
+                  ))}
+                </div>
+                {guestTitleTemplate && (
+                  <div className="mt-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <p className="text-xs text-slate-400 mb-1">プレビュー</p>
+                    <p className="text-sm font-medium text-slate-700">
+                      {guestTitleTemplate
+                        .replace('{予約者名}', '山田太郎')
+                        .replace('{メニュー名}', watch('title') || '初回相談')
+                        .replace('{会社名}', '株式会社〇〇')
+                        .replace('{日付}', '2026/2/20')
+                        .replace('{時刻}', '14:00')}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Guest Description Template */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                  ゲスト向けメモ欄
+                  <span className="ml-1 text-xs font-normal text-slate-400">相手のカレンダーイベントの説明欄に表示されます</span>
+                </label>
+                <textarea
+                  id="guestDescriptionTemplateNew"
+                  value={guestDescriptionTemplate}
+                  onChange={(e) => setGuestDescriptionTemplate(e.target.value)}
+                  placeholder="{meet_link}"
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none transition text-slate-900 placeholder-slate-400 resize-none"
+                />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {([
+                    { var: '{meet_link}', label: 'Meetリンク' },
+                    { var: '{予約者名}', label: '予約者名' },
+                    { var: '{メニュー名}', label: 'メニュー名' },
+                    { var: '{会社名}', label: '会社名' },
+                    { var: '{日付}', label: '日付' },
+                    { var: '{時刻}', label: '時刻' },
+                    { var: '{メール}', label: 'メール' },
+                    { var: '{備考}', label: '備考' },
+                  ] as const).map(({ var: v, label }) => (
+                    <button
+                      key={v}
+                      type="button"
+                      onClick={() => {
+                        const textarea = document.getElementById('guestDescriptionTemplateNew') as HTMLTextAreaElement;
+                        const pos = textarea?.selectionStart ?? guestDescriptionTemplate.length;
+                        setGuestDescriptionTemplate(
+                          guestDescriptionTemplate.slice(0, pos) + v + guestDescriptionTemplate.slice(pos)
+                        );
+                        setTimeout(() => { textarea?.focus(); textarea?.setSelectionRange(pos + v.length, pos + v.length); }, 0);
+                      }}
+                      className="px-2.5 py-1 rounded-lg bg-brand-50 text-brand-600 text-xs font-medium border border-brand-200 hover:bg-brand-100 transition cursor-pointer"
+                    >
+                      + {label}
+                    </button>
+                  ))}
+                </div>
+                {guestDescriptionTemplate && (
+                  <div className="mt-3 px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <p className="text-xs text-slate-400 mb-1">プレビュー</p>
+                    <p className="text-sm text-slate-700 whitespace-pre-wrap">
+                      {guestDescriptionTemplate
+                        .replace('{meet_link}', 'https://meet.google.com/xxx-yyyy-zzz')
                         .replace('{予約者名}', '山田太郎')
                         .replace('{メール}', 'yamada@example.com')
                         .replace('{メニュー名}', watch('title') || '初回相談')

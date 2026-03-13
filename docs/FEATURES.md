@@ -202,6 +202,8 @@
 | 公開期間 | 任意 | 1〜90日 | 14日 |
 | 最低予約猶予 | 任意 | 0〜10080分 | 60分 |
 | カレンダータイトル | 任意 | テンプレート文字列 | `{メニュー名} - {予約者名}` |
+| ゲスト向けタイトル | 任意 | テンプレート文字列 | `{メニュー名}` |
+| ゲスト向けメモ欄 | 任意 | テンプレート文字列 | `{meet_link}` |
 | 予約可能時間帯の制限 | 任意 | none/preset/custom | none |
 
 **カレンダータイトルテンプレート変数**:
@@ -214,6 +216,11 @@
 | `{時刻}` | 予約時刻 | 14:00 |
 | `{メール}` | 予約者のメール | yamada@example.com |
 | `{備考}` | 備考（先頭50文字） | サービスについて相談 |
+
+**ゲスト向けテンプレート変数**（上記に加えて）:
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `{meet_link}` | Google MeetリンクURL | https://meet.google.com/xxx |
 
 **時間帯制限**:
 | 種別 | 説明 |
@@ -247,6 +254,8 @@
 - 公開期間（`days_ahead`）
 - 最低予約猶予（`min_notice_minutes`）
 - カレンダータイトルテンプレート（`calendar_title_template`）
+- ゲスト向けタイトルテンプレート（`guest_title_template`）
+- ゲスト向けメモ欄テンプレート（`guest_description_template`）
 - 予約可能時間帯の制限（`time_restriction_type`, `time_restriction_preset_id`, `time_restriction_custom`）
 
 **制約**:
