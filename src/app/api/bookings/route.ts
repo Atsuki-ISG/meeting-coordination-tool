@@ -6,6 +6,7 @@ import { isSlotAvailable } from '@/lib/availability/calculator';
 import {
   createCalendarClient,
   createCalendarEvent,
+  updateCalendarEvent,
   refreshAccessToken,
   getFreeBusy,
 } from '@/lib/google-calendar/client';
@@ -232,45 +233,8 @@ export async function POST(request: NextRequest) {
     );
     const calendar = createCalendarClient(accessToken);
 
-    // --- イベント1: チーム内部用（備考・会社名含む）---
-    const internalAttendees = [
-      ...members.map((m) => m.email),
-      ...noteTakerEmails.filter((e) => !members.some((m) => m.email === e)),
-    ];
-
-    const companyLine = `\n【会社名】\n${validatedData.companyName}`;
-    const phoneLine = `\n【電話番号】\n${validatedData.phoneNumber}`;
-
-    // Generate calendar title from template (supports both Japanese and legacy English variables)
-    const calendarTitle = (eventType.calendar_title_template || '{メニュー名} - {予約者名}')
-      .replace('{予約者名}', validatedData.name)
-      .replace('{メール}', validatedData.email)
-      .replace('{メニュー名}', eventType.title)
-      .replace('{会社名}', validatedData.companyName)
-      .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
-      .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
-      .replace('{備考}', validatedData.note.substring(0, 50))
-      // Legacy English variables for backward compatibility
-      .replace('{guest_name}', validatedData.name)
-      .replace('{guest_email}', validatedData.email)
-      .replace('{event_type}', eventType.title)
-      .replace('{company_name}', validatedData.companyName)
-      .replace('{date}', slot.start.toLocaleDateString('ja-JP'))
-      .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
-      .replace('{notes}', validatedData.note.substring(0, 50));
-
-    const { eventId: googleEventId, meetLink } = await createCalendarEvent(calendar, {
-      summary: calendarTitle,
-      description: `${validatedData.name} 様からのご予約${companyLine}${phoneLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
-      start: slot.start,
-      end: slot.end,
-      attendees: internalAttendees,
-      organizerEmail: organizer.email,
-      addMeetLink: true,
-    });
-
-    // --- イベント2: ゲスト用（テンプレートで生成）---
-    const applyGuestTemplate = (template: string) =>
+    // --- イベント1: ゲスト用（Meetリンク発行）---
+    const applyTemplate = (template: string, meetUrl: string) =>
       template
         .replace('{予約者名}', validatedData.name)
         .replace('{メール}', validatedData.email)
@@ -279,7 +243,7 @@ export async function POST(request: NextRequest) {
         .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
         .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
         .replace('{備考}', validatedData.note.substring(0, 50))
-        .replace('{meet_link}', meetLink || '')
+        .replace('{meet_link}', meetUrl)
         // Legacy English variables
         .replace('{guest_name}', validatedData.name)
         .replace('{guest_email}', validatedData.email)
@@ -289,23 +253,48 @@ export async function POST(request: NextRequest) {
         .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
         .replace('{notes}', validatedData.note.substring(0, 50));
 
-    const guestTitle = applyGuestTemplate(eventType.guest_title_template || '{メニュー名}');
-    const guestDescription = applyGuestTemplate(eventType.guest_description_template || '{meet_link}') || undefined;
+    const guestTitle = applyTemplate(eventType.guest_title_template || '{メニュー名}', '');
+    const { eventId: guestEventId, meetLink } = await createCalendarEvent(calendar, {
+      summary: guestTitle,
+      start: slot.start,
+      end: slot.end,
+      attendees: [validatedData.email, organizer.email],
+      organizerEmail: organizer.email,
+      addMeetLink: true,
+    });
 
-    try {
-      await createCalendarEvent(calendar, {
-        summary: guestTitle,
-        description: guestDescription,
-        start: slot.start,
-        end: slot.end,
-        attendees: [validatedData.email],
-        organizerEmail: organizer.email,
-        addMeetLink: false,
-      });
-    } catch (err) {
-      console.error('Failed to create guest calendar event:', err);
-      // ゲスト用イベントの失敗は予約全体を止めない
+    // Meetリンク確定後にゲスト用イベントの説明欄を更新
+    const guestDescription = applyTemplate(eventType.guest_description_template || '{meet_link}', meetLink || '') || undefined;
+    if (guestDescription) {
+      try {
+        await updateCalendarEvent(calendar, guestEventId, { description: guestDescription });
+      } catch (err) {
+        console.error('Failed to update guest event description:', err);
+      }
     }
+
+    // --- イベント2: チーム内部用（ゲストは招待せず、メモ欄に記載）---
+    const internalAttendees = [
+      ...members.map((m) => m.email),
+      ...noteTakerEmails.filter((e) => !members.some((m) => m.email === e)),
+    ];
+
+    const companyLine = `\n【会社名】\n${validatedData.companyName}`;
+    const phoneLine = `\n【電話番号】\n${validatedData.phoneNumber}`;
+    const meetLine = meetLink ? `\n\n【Google Meet】\n${meetLink}` : '';
+
+    // Generate calendar title from template
+    const calendarTitle = applyTemplate(eventType.calendar_title_template || '{メニュー名} - {予約者名}', meetLink || '');
+
+    const { eventId: googleEventId } = await createCalendarEvent(calendar, {
+      summary: calendarTitle,
+      description: `${validatedData.name} 様からのご予約${companyLine}${phoneLine}${meetLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
+      start: slot.start,
+      end: slot.end,
+      attendees: internalAttendees,
+      organizerEmail: organizer.email,
+      addMeetLink: false,
+    });
 
     // Generate cancel token
     const cancelToken = generateToken();

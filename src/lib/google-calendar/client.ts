@@ -215,6 +215,22 @@ export async function createCalendarEvent(
 }
 
 /**
+ * Update a calendar event (e.g. to set description after Meet link is known)
+ */
+export async function updateCalendarEvent(
+  calendar: calendar_v3.Calendar,
+  eventId: string,
+  updates: { description?: string }
+): Promise<void> {
+  await calendar.events.patch({
+    calendarId: 'primary',
+    eventId,
+    sendUpdates: 'none',
+    requestBody: updates,
+  });
+}
+
+/**
  * Delete a calendar event
  */
 export async function deleteCalendarEvent(
