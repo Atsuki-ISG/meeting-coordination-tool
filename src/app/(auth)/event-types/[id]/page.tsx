@@ -67,6 +67,7 @@ export default function EventTypeDetailPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [selectedMemberIds, setSelectedMemberIds] = useState<string[]>([]);
   const [participationMode, setParticipationMode] = useState<'all_required' | 'any_available'>('all_required');
+  const [assignmentStrategy, setAssignmentStrategy] = useState<'balanced' | 'priority'>('balanced');
   const [noteTakerMemberId, setNoteTakerMemberId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [calendarTitleTemplate, setCalendarTitleTemplate] = useState('{メニュー名} - {予約者名}');
@@ -97,6 +98,18 @@ export default function EventTypeDetailPage() {
         ? prev.filter((id) => id !== memberId)
         : [...prev, memberId]
     );
+  };
+
+  const moveMember = (memberId: string, direction: 'up' | 'down') => {
+    setSelectedMemberIds((prev) => {
+      const idx = prev.indexOf(memberId);
+      if (idx < 0) return prev;
+      const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (newIdx < 0 || newIdx >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[newIdx]] = [next[newIdx], next[idx]];
+      return next;
+    });
   };
 
   const {
@@ -145,6 +158,7 @@ export default function EventTypeDetailPage() {
           const data = await eventTypeRes.json();
           setEventType(data);
           setParticipationMode(data.participation_mode || 'all_required');
+          setAssignmentStrategy(data.assignment_strategy || 'balanced');
           setNoteTakerMemberId(data.note_taker_member_id ?? null);
           setCalendarTitleTemplate(data.calendar_title_template || '{メニュー名} - {予約者名}');
           setGuestTitleTemplate(data.guest_title_template || '{メニュー名}');
@@ -183,8 +197,11 @@ export default function EventTypeDetailPage() {
         }
 
         if (eventTypeMembersRes.ok) {
-          const data = await eventTypeMembersRes.json();
-          setSelectedMemberIds(data.map((m: { member_id: string }) => m.member_id));
+          const data: Array<{ member_id: string; priority?: number }> = await eventTypeMembersRes.json();
+          const sorted = [...data].sort(
+            (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
+          );
+          setSelectedMemberIds(sorted.map((m) => m.member_id));
         }
 
         if (presetsRes.ok) {
@@ -214,6 +231,7 @@ export default function EventTypeDetailPage() {
           isActive: data.isActive,
           memberIds: selectedMemberIds,
           participationMode,
+          assignmentStrategy,
           noteTakerMemberId,
           calendarTitleTemplate,
           guestTitleTemplate,
@@ -451,45 +469,124 @@ export default function EventTypeDetailPage() {
                       ))}
                     </div>
 
+                    {/* Assignment Strategy (only for any_available) */}
+                    {participationMode === 'any_available' && (
+                      <div className="mb-4">
+                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                          参加者の決定方法
+                        </label>
+                        <div className="grid grid-cols-2 gap-3">
+                          {([
+                            { value: 'balanced', label: '均等', desc: '過去30日の担当件数が最少の人を自動で割当' },
+                            { value: 'priority', label: '優先度順', desc: '下の並び順で空いている最初の人を割当' },
+                          ] as const).map(({ value, label, desc }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setAssignmentStrategy(value)}
+                              className={`flex flex-col items-start rounded-xl border-2 p-4 transition-all text-left ${
+                                assignmentStrategy === value
+                                  ? 'border-brand-500 bg-brand-50'
+                                  : 'border-slate-200 hover:border-slate-300'
+                              }`}
+                              aria-pressed={assignmentStrategy === value}
+                            >
+                              <span className={`font-semibold text-sm ${assignmentStrategy === value ? 'text-brand-700' : 'text-slate-700'}`}>{label}</span>
+                              <span className="text-xs text-slate-500 mt-0.5">{desc}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <label className="block text-sm font-semibold text-slate-700 mb-2">
                       参加メンバー（複数選択可）
                     </label>
                     <p className="text-sm text-slate-500 mb-4">
-                      選択したメンバーの予定から共通の空き時間を見つけます
+                      {participationMode === 'any_available' && assignmentStrategy === 'priority'
+                        ? '↑↓ で並び替えができます。上にあるメンバーほど優先されます。'
+                        : '選択したメンバーの予定から共通の空き時間を見つけます'}
                     </p>
                     <div className="space-y-2">
-                      {members.map((member) => (
-                        <label
-                          key={member.id}
-                          className={`flex cursor-pointer items-center gap-4 rounded-xl border-2 p-4 transition-all ${
-                            selectedMemberIds.includes(member.id)
-                              ? 'border-brand-500 bg-brand-50'
-                              : 'border-slate-200 hover:border-slate-300'
-                          }`}
-                        >
-                          <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
-                            selectedMemberIds.includes(member.id)
-                              ? 'border-brand-500 bg-brand-500'
-                              : 'border-slate-300'
-                          }`}>
-                            {selectedMemberIds.includes(member.id) && (
-                              <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <input
-                            type="checkbox"
-                            checked={selectedMemberIds.includes(member.id)}
-                            onChange={() => toggleMember(member.id)}
-                            className="sr-only"
-                          />
-                          <div>
-                            <p className="font-semibold text-slate-900">{member.name}</p>
-                            <p className="text-sm text-slate-500">{member.email}</p>
-                          </div>
-                        </label>
-                      ))}
+                      {(() => {
+                        const showPriorityOrder =
+                          participationMode === 'any_available' && assignmentStrategy === 'priority';
+                        // 優先度順モードでは選択済み→未選択の順で表示
+                        const orderedMembers = showPriorityOrder
+                          ? [
+                              ...selectedMemberIds
+                                .map((id) => members.find((m) => m.id === id))
+                                .filter((m): m is Member => Boolean(m)),
+                              ...members.filter((m) => !selectedMemberIds.includes(m.id)),
+                            ]
+                          : members;
+                        return orderedMembers.map((member) => {
+                          const selected = selectedMemberIds.includes(member.id);
+                          const idx = selectedMemberIds.indexOf(member.id);
+                          const isFirst = idx === 0;
+                          const isLast = idx === selectedMemberIds.length - 1;
+                          return (
+                            <div
+                              key={member.id}
+                              className={`flex items-center gap-4 rounded-xl border-2 p-4 transition-all ${
+                                selected
+                                  ? 'border-brand-500 bg-brand-50'
+                                  : 'border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => toggleMember(member.id)}
+                                className="flex items-center gap-4 flex-1 text-left"
+                                aria-pressed={selected}
+                              >
+                                <div className={`w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                  selected
+                                    ? 'border-brand-500 bg-brand-500'
+                                    : 'border-slate-300'
+                                }`}>
+                                  {selected && (
+                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <div>
+                                  {showPriorityOrder && selected && (
+                                    <span className="inline-block mr-2 px-2 py-0.5 text-xs font-semibold text-brand-700 bg-brand-100 rounded">
+                                      {idx + 1}
+                                    </span>
+                                  )}
+                                  <span className="font-semibold text-slate-900">{member.name}</span>
+                                  <p className="text-sm text-slate-500">{member.email}</p>
+                                </div>
+                              </button>
+                              {showPriorityOrder && selected && (
+                                <div className="flex flex-col gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => moveMember(member.id, 'up')}
+                                    disabled={isFirst}
+                                    aria-label={`${member.name} の優先度を上げる`}
+                                    className="w-7 h-7 flex items-center justify-center rounded border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    ↑
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => moveMember(member.id, 'down')}
+                                    disabled={isLast}
+                                    aria-label={`${member.name} の優先度を下げる`}
+                                    className="w-7 h-7 flex items-center justify-center rounded border border-slate-300 text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                                  >
+                                    ↓
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 )}

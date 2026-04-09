@@ -15,8 +15,11 @@ const avatarColors = [
   'from-emerald-400 to-emerald-600',
 ];
 
-// Booking with optional event_type from API
-type BookingData = Booking & { event_type?: BookingWithEventType['event_type'] };
+// Booking with optional event_type and assigned_member from API
+type BookingData = Booking & {
+  event_type?: BookingWithEventType['event_type'];
+  assigned_member?: { id: string; name: string; email: string } | null;
+};
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState<BookingData[]>([]);
@@ -198,6 +201,16 @@ export default function BookingsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                               </svg>
                               {booking.event_type.title}
+                            </span>
+                          </p>
+                        )}
+                        {booking.assigned_member && (
+                          <p className="mt-1 text-xs md:text-sm text-slate-600">
+                            <span className="inline-flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              担当: <span className="font-medium text-slate-800">{booking.assigned_member.name}</span>
                             </span>
                           </p>
                         )}

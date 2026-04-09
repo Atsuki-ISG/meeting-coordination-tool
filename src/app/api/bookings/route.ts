@@ -17,7 +17,8 @@ import {
   getClientIp,
   invalidateMonthlyCache,
 } from '@/lib/rate-limit';
-import type { BusySlot } from '@/types';
+import { assignMember } from '@/lib/booking/assign-member';
+import type { Member } from '@/types';
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
@@ -58,7 +59,8 @@ export async function GET(request: NextRequest) {
     .from('bookings')
     .select(`
       *,
-      event_type:event_types(id, title, slug, duration_minutes)
+      event_type:event_types(id, title, slug, duration_minutes),
+      assigned_member:members!bookings_assigned_member_id_fkey(id, name, email)
     `)
     .in('event_type_id', eventTypeIds)
     .order('start_at', { ascending: true });
@@ -192,7 +194,8 @@ export async function POST(request: NextRequest) {
       end: new Date(validatedData.endAt),
     };
 
-    const busySlotsArrays: BusySlot[][] = [];
+    // Check each member individually so we know who is free
+    const availableMembers: Member[] = [];
 
     for (const member of members) {
       try {
@@ -206,17 +209,45 @@ export async function POST(request: NextRequest) {
           slot.start,
           slot.end
         );
-        busySlotsArrays.push(busySlots);
+        if (isSlotAvailable(slot, [busySlots])) {
+          availableMembers.push(member);
+        }
       } catch (error) {
         console.error(`Failed to check availability for member ${member.id}:`, error);
       }
     }
 
-    if (!isSlotAvailable(slot, busySlotsArrays)) {
-      return NextResponse.json(
-        { error: 'Selected time slot is no longer available' },
-        { status: 409 }
-      );
+    if (eventType.participation_mode === 'all_required') {
+      if (availableMembers.length !== members.length) {
+        return NextResponse.json(
+          { error: 'Selected time slot is no longer available' },
+          { status: 409 }
+        );
+      }
+    } else {
+      // any_available: at least one member must be free
+      if (availableMembers.length === 0) {
+        return NextResponse.json(
+          { error: 'Selected time slot is no longer available' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Decide the assigned member for any_available mode
+    let assignedMember: Member | null = null;
+    if (eventType.participation_mode === 'any_available') {
+      assignedMember = await assignMember(supabase, {
+        eventTypeId: eventType.id,
+        strategy: (eventType.assignment_strategy as 'balanced' | 'priority') || 'balanced',
+        availableMembers,
+      });
+      if (!assignedMember) {
+        return NextResponse.json(
+          { error: 'Failed to assign member' },
+          { status: 500 }
+        );
+      }
     }
 
     // Get organizer's access token to create the event
@@ -274,9 +305,14 @@ export async function POST(request: NextRequest) {
     }
 
     // --- イベント2: チーム内部用（ゲストは招待せず、メモ欄に記載）---
+    // any_available モードでは担当1人 + 議事録担当のみ招待
+    const attendingMembers =
+      eventType.participation_mode === 'any_available' && assignedMember
+        ? [assignedMember]
+        : members;
     const internalAttendees = [
-      ...members.map((m) => m.email),
-      ...noteTakerEmails.filter((e) => !members.some((m) => m.email === e)),
+      ...attendingMembers.map((m) => m.email),
+      ...noteTakerEmails.filter((e) => !attendingMembers.some((m) => m.email === e)),
     ];
 
     const companyLine = `\n【会社名】\n${validatedData.companyName}`;
@@ -314,6 +350,7 @@ export async function POST(request: NextRequest) {
         phone_number: validatedData.phoneNumber,
         note: validatedData.note,
         cancel_token_hash: cancelTokenHash,
+        assigned_member_id: assignedMember?.id ?? null,
         status: 'confirmed',
       })
       .select()

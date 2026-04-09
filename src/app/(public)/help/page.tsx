@@ -182,7 +182,8 @@ export default function HelpPage() {
                     <tr><td className="px-4 py-3 font-medium text-slate-800">説明</td><td className="px-4 py-3 text-slate-600">予約の詳細説明（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">所要時間</td><td className="px-4 py-3 text-slate-600">15分 / 30分 / 45分 / 60分 / 90分 / 120分 のプリセット、または「カスタム」で5〜480分の任意の時間を指定</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">参加方式</td><td className="px-4 py-3 text-slate-600">「全員参加」または「誰か1名参加」</td></tr>
-                    <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択（全員から選択可能）</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">参加者の決定方法</td><td className="px-4 py-3 text-slate-600">「誰か1名参加」のときのみ表示。<strong>均等</strong>＝過去30日間の担当件数が最も少ないメンバーを自動で割当 / <strong>優先度順</strong>＝メンバーリストの並び順（↑↓ボタンで変更）で空いている最上位のメンバーを割当</td></tr>
+                    <tr><td className="px-4 py-3 font-medium text-slate-800">参加メンバー</td><td className="px-4 py-3 text-slate-600">この予約に参加するメンバーを選択（全員から選択可能）。「優先度順」を選んだ場合は上にあるメンバーほど優先されます</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">議事録担当</td><td className="px-4 py-3 text-slate-600">チーム設定で「議事録担当」に指定されたメンバーから選択。カレンダー招待に自動追加されます（任意）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">カレンダータイトル</td><td className="px-4 py-3 text-slate-600">チーム内部のカレンダーに表示されるタイトルをカスタマイズ。変数ボタンをクリックして挿入でき、プレビューで確認できます（ゲストには表示されません）</td></tr>
                     <tr><td className="px-4 py-3 font-medium text-slate-800">ゲスト向けタイトル</td><td className="px-4 py-3 text-slate-600">予約者のカレンダーに表示されるイベントタイトルをカスタマイズ。変数ボタンで挿入でき、プレビューで確認できます（デフォルト: メニュー名）</td></tr>
@@ -262,6 +263,7 @@ export default function HelpPage() {
                 <li>• 予約者名・メールアドレス</li>
                 <li>• 日時</li>
                 <li>• 予約タイプ名</li>
+                <li>• 担当（「誰か1名参加」モードで自動割り当てされたメンバー）</li>
                 <li>• ステータス（確定 / キャンセル）</li>
                 <li>• 備考</li>
               </ul>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSessionUser } from '@/lib/auth/api';
+import { buildEventTypeMemberInserts } from '@/lib/booking/event-type-members';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -79,6 +80,7 @@ const createEventTypeSchema = z.object({
   durationMinutes: z.union([z.string(), z.number()]).transform((val) => Number(val)).pipe(z.number().min(5).max(480)),
   memberIds: z.array(z.string().uuid()).optional(),
   participationMode: z.enum(['all_required', 'any_available']).optional(),
+  assignmentStrategy: z.enum(['balanced', 'priority']).optional(),
   noteTakerMemberId: z.string().uuid().optional().nullable(),
   calendarTitleTemplate: z.string().optional(),
   guestTitleTemplate: z.string().optional(),
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
         description: validatedData.description || null,
         duration_minutes: validatedData.durationMinutes,
         participation_mode: validatedData.participationMode || 'all_required',
+        assignment_strategy: validatedData.assignmentStrategy || 'balanced',
         note_taker_member_id: validatedData.noteTakerMemberId ?? null,
         calendar_title_template: validatedData.calendarTitleTemplate || '{メニュー名} - {予約者名}',
         guest_title_template: validatedData.guestTitleTemplate || '{メニュー名}',
@@ -161,10 +164,10 @@ export async function POST(request: NextRequest) {
 
     // Add members to event type
     if (validatedData.memberIds && validatedData.memberIds.length > 0) {
-      const memberInserts = validatedData.memberIds.map((memberId) => ({
-        event_type_id: eventType.id,
-        member_id: memberId,
-      }));
+      const memberInserts = buildEventTypeMemberInserts(
+        eventType.id,
+        validatedData.memberIds
+      );
 
       const { error: membersError } = await supabase
         .from('event_type_members')

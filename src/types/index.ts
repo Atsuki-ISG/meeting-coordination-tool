@@ -93,6 +93,7 @@ export interface EventType {
   organizer_id: string;
   is_active: boolean;
   participation_mode: 'all_required' | 'any_available';
+  assignment_strategy: 'balanced' | 'priority';
   note_taker_member_id: string | null;
   calendar_title_template: string;
   time_restriction_type: 'none' | 'preset' | 'custom';
@@ -107,6 +108,7 @@ export interface EventType {
 export interface EventTypeMember {
   event_type_id: string;
   member_id: string;
+  priority: number;
 }
 
 export interface Booking {
@@ -120,6 +122,7 @@ export interface Booking {
   company_name: string | null;
   note: string | null;
   cancel_token_hash: string | null;
+  assigned_member_id: string | null;
   status: 'confirmed' | 'canceled';
   created_at: string;
   canceled_at: string | null;

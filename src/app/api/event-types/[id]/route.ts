@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSessionUser } from '@/lib/auth/api';
+import { buildEventTypeMemberInserts } from '@/lib/booking/event-type-members';
 
 const updateEventTypeSchema = z.object({
   title: z.string().min(1).optional(),
@@ -13,6 +14,7 @@ const updateEventTypeSchema = z.object({
   minNoticeMinutes: z.number().min(0).max(10080).optional(),
   memberIds: z.array(z.string().uuid()).optional(),
   participationMode: z.enum(['all_required', 'any_available']).optional(),
+  assignmentStrategy: z.enum(['balanced', 'priority']).optional(),
   noteTakerMemberId: z.string().uuid().optional().nullable(),
   calendarTitleTemplate: z.string().optional(),
   guestTitleTemplate: z.string().optional(),
@@ -86,6 +88,7 @@ export async function PATCH(
     if (validatedData.durationMinutes !== undefined) updateData.duration_minutes = validatedData.durationMinutes;
     if (validatedData.isActive !== undefined) updateData.is_active = validatedData.isActive;
     if (validatedData.participationMode !== undefined) updateData.participation_mode = validatedData.participationMode;
+    if (validatedData.assignmentStrategy !== undefined) updateData.assignment_strategy = validatedData.assignmentStrategy;
     if (validatedData.noteTakerMemberId !== undefined) updateData.note_taker_member_id = validatedData.noteTakerMemberId;
     if (validatedData.calendarTitleTemplate !== undefined) updateData.calendar_title_template = validatedData.calendarTitleTemplate;
     if (validatedData.guestTitleTemplate !== undefined) updateData.guest_title_template = validatedData.guestTitleTemplate;
@@ -124,12 +127,12 @@ export async function PATCH(
         console.error('Failed to delete existing members:', deleteError);
       }
 
-      // Insert new members
+      // Insert new members (array order = priority)
       if (validatedData.memberIds.length > 0) {
-        const memberInserts = validatedData.memberIds.map((memberId) => ({
-          event_type_id: id,
-          member_id: memberId,
-        }));
+        const memberInserts = buildEventTypeMemberInserts(
+          id,
+          validatedData.memberIds
+        );
 
         const { error: insertError } = await supabase
           .from('event_type_members')
