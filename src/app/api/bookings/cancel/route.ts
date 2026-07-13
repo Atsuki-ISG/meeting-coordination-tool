@@ -100,17 +100,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Delete calendar event
+    // Delete calendar events. There are two: the internal team event
+    // (google_event_id) and the guest-facing Meet event (guest_event_id).
+    // Both must be removed so the guest is notified (sendUpdates:'all') and the
+    // organizer's calendar/free-busy is freed. Delete each independently so one
+    // failure doesn't skip the other.
     const organizer = booking.event_type?.organizer;
-    if (organizer?.google_refresh_token && booking.google_event_id) {
+    if (organizer?.google_refresh_token) {
       try {
         const { accessToken } = await refreshAccessToken(
           organizer.google_refresh_token
         );
         const calendar = createCalendarClient(accessToken);
-        await deleteCalendarEvent(calendar, booking.google_event_id);
+        for (const eventId of [booking.google_event_id, booking.guest_event_id]) {
+          if (!eventId) continue;
+          try {
+            await deleteCalendarEvent(calendar, eventId);
+          } catch (error) {
+            console.error(`Failed to delete calendar event ${eventId}:`, error);
+          }
+        }
       } catch (error) {
-        console.error('Failed to delete calendar event:', error);
+        console.error('Failed to refresh token for calendar deletion:', error);
         // Continue with booking cancellation even if calendar deletion fails
       }
     }

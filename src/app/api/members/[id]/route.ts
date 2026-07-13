@@ -27,6 +27,42 @@ export async function PATCH(
 
     const supabase = await createServiceClient();
 
+    // Authorization: only a team admin may change another member's active state,
+    // and only for members of their own team. Without this any logged-in user
+    // could deactivate arbitrary members across teams (IDOR).
+    const { data: currentMember } = await supabase
+      .from('members')
+      .select('team_id, role')
+      .eq('id', user.memberId)
+      .single();
+
+    if (!currentMember?.team_id || currentMember.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Only admin can update members' },
+        { status: 403 }
+      );
+    }
+
+    if (id === user.memberId) {
+      return NextResponse.json(
+        { error: 'Cannot change your own active state' },
+        { status: 400 }
+      );
+    }
+
+    const { data: targetMember } = await supabase
+      .from('members')
+      .select('team_id')
+      .eq('id', id)
+      .single();
+
+    if (!targetMember || targetMember.team_id !== currentMember.team_id) {
+      return NextResponse.json(
+        { error: 'Member not found in your team' },
+        { status: 404 }
+      );
+    }
+
     // Build update object
     const updateData: Record<string, unknown> = {};
     if (validatedData.isActive !== undefined) {
@@ -81,13 +117,27 @@ export async function GET(
   const { id } = await params;
   const supabase = await createServiceClient();
 
+  // Only allow viewing members within the caller's own team.
+  const { data: currentMember } = await supabase
+    .from('members')
+    .select('team_id')
+    .eq('id', user.memberId)
+    .single();
+
+  if (!currentMember?.team_id) {
+    return NextResponse.json(
+      { error: 'Not a team member' },
+      { status: 403 }
+    );
+  }
+
   const { data, error } = await supabase
     .from('members')
-    .select('id, name, email, is_active, created_at')
+    .select('id, name, email, is_active, created_at, team_id')
     .eq('id', id)
     .single();
 
-  if (error || !data) {
+  if (error || !data || data.team_id !== currentMember.team_id) {
     return NextResponse.json(
       { error: 'Member not found' },
       { status: 404 }

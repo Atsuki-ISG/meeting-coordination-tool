@@ -1,5 +1,4 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
 
 // Supabase モック
 const mockFrom = vi.fn();
@@ -55,8 +54,7 @@ describe('GET /api/members', () => {
   it('未認証の場合は 401 を返す', async () => {
     mockGetSessionUser.mockResolvedValue(null);
 
-    const req = new NextRequest('http://localhost/api/members');
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(401);
     const json = await res.json();
@@ -73,8 +71,7 @@ describe('GET /api/members', () => {
       isSystemAdmin: false,
     });
 
-    const req = new NextRequest('http://localhost/api/members');
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(403);
     const json = await res.json();
@@ -106,8 +103,7 @@ describe('GET /api/members', () => {
       error: null,
     });
 
-    const req = new NextRequest('http://localhost/api/members');
-    const res = await GET(req);
+    const res = await GET();
 
     expect(res.status).toBe(200);
     const json = await res.json();
@@ -144,7 +140,7 @@ describe('GET /api/members', () => {
         error: null,
       });
 
-      const res = await GET(new NextRequest('http://localhost/api/members'));
+      const res = await GET();
       const json = await res.json();
 
       expect(json[0].has_google_token).toBe(true);
@@ -164,7 +160,7 @@ describe('GET /api/members', () => {
         error: null,
       });
 
-      const res = await GET(new NextRequest('http://localhost/api/members'));
+      const res = await GET();
       const json = await res.json();
 
       expect(json).toHaveLength(1);
@@ -185,7 +181,7 @@ describe('GET /api/members', () => {
         error: null,
       });
 
-      const res = await GET(new NextRequest('http://localhost/api/members'));
+      const res = await GET();
       const json = await res.json();
 
       expect(json[0].google_refresh_token).toBeUndefined();
@@ -216,7 +212,7 @@ describe('GET /api/members', () => {
         error: null,
       });
 
-      const res = await GET(new NextRequest('http://localhost/api/members'));
+      const res = await GET();
       const json = await res.json();
 
       expect(json).toHaveLength(2);
@@ -240,7 +236,7 @@ describe('GET /api/members', () => {
 
     setupFromMock({ data: null, error: null });
 
-    const res = await GET(new NextRequest('http://localhost/api/members'));
+    const res = await GET();
     const json = await res.json();
 
     expect(json).toEqual([]);
@@ -259,7 +255,7 @@ describe('GET /api/members', () => {
     // members クエリがエラー → 早期リターンで 500
     mockFrom.mockImplementation(() => buildChain({ data: null, error: { message: 'DB error' } }));
 
-    const res = await GET(new NextRequest('http://localhost/api/members'));
+    const res = await GET();
 
     expect(res.status).toBe(500);
     const json = await res.json();

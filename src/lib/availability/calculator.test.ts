@@ -4,6 +4,7 @@ import {
   mergeBusySlots,
   calculateAvailability,
   isSlotAvailable,
+  isSlotWithinBookableWindow,
 } from './calculator';
 import type { BusySlot } from '@/types';
 
@@ -671,6 +672,109 @@ describe('calculateAvailability', () => {
         expect(slot.start.getTime()).toBeGreaterThanOrEqual(d('2024-01-15T04:00:00Z').getTime());
         expect(slot.end.getTime()).toBeLessThanOrEqual(d('2024-01-15T08:00:00Z').getTime());
       });
+    });
+  });
+
+  // ======================================================
+  // isSlotWithinBookableWindow (予約 POST のサーバー側スロット検証)
+  // FIXED_NOW = 2024-01-14 20:00Z = 2024-01-15 05:00 JST (月曜早朝)
+  // ======================================================
+  describe('isSlotWithinBookableWindow', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(FIXED_NOW));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    // 月 10:00-10:30 JST = UTC 01:00-01:30 (営業時間 09:00-18:00 内)
+    const validMon = { start: d('2024-01-15T01:00:00Z'), end: d('2024-01-15T01:30:00Z') };
+
+    it('営業時間内・十分な通知時間のスロットを許可する', () => {
+      expect(
+        isSlotWithinBookableWindow(validMon, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+        })
+      ).toBe(true);
+    });
+
+    it('営業時間外（09:00前）のスロットを拒否する', () => {
+      // 月 08:00-08:30 JST = UTC 2024-01-14T23:00
+      const early = { start: d('2024-01-14T23:00:00Z'), end: d('2024-01-14T23:30:00Z') };
+      expect(
+        isSlotWithinBookableWindow(early, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+        })
+      ).toBe(false);
+    });
+
+    it('営業終了(18:00)をまたぐスロットを拒否する', () => {
+      // 月 17:45-18:15 JST = UTC 08:45-09:15
+      const crossEnd = { start: d('2024-01-15T08:45:00Z'), end: d('2024-01-15T09:15:00Z') };
+      expect(
+        isSlotWithinBookableWindow(crossEnd, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+        })
+      ).toBe(false);
+    });
+
+    it('無効な曜日（土曜）のスロットを拒否する', () => {
+      // 土 2024-01-20 10:00-10:30 JST = UTC 01:00-01:30
+      const sat = { start: d('2024-01-20T01:00:00Z'), end: d('2024-01-20T01:30:00Z') };
+      expect(
+        isSlotWithinBookableWindow(sat, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+        })
+      ).toBe(false);
+    });
+
+    it('過去日時のスロットを拒否する', () => {
+      // 先週の月曜 = 過去
+      const past = { start: d('2024-01-08T01:00:00Z'), end: d('2024-01-08T01:30:00Z') };
+      expect(
+        isSlotWithinBookableWindow(past, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+        })
+      ).toBe(false);
+    });
+
+    it('最短通知時間を満たさないスロットを拒否する', () => {
+      // now=05:00 JST。通知480分(8h)なら 13:00 JST 以降のみ許可。10:00 は不可。
+      expect(
+        isSlotWithinBookableWindow(validMon, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 480,
+        })
+      ).toBe(false);
+    });
+
+    it('duration と一致しても time restriction 外なら拒否する', () => {
+      // 制限: 月 13:00-17:00 のみ。10:00 のスロットは制限外。
+      expect(
+        isSlotWithinBookableWindow(validMon, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+          timeRestriction: { days: [1], start_time: '13:00', end_time: '17:00' },
+        })
+      ).toBe(false);
+    });
+
+    it('time restriction 内のスロットを許可する', () => {
+      // 制限: 月 13:00-17:00。14:00-14:30 JST = UTC 05:00-05:30 は範囲内。
+      const inRestriction = { start: d('2024-01-15T05:00:00Z'), end: d('2024-01-15T05:30:00Z') };
+      expect(
+        isSlotWithinBookableWindow(inRestriction, {
+          weeklyAvailability: weekdaysOnly,
+          minBookingNoticeMinutes: 60,
+          timeRestriction: { days: [1], start_time: '13:00', end_time: '17:00' },
+        })
+      ).toBe(true);
     });
   });
 });

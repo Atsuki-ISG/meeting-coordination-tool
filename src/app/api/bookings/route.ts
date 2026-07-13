@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createServiceClient } from '@/lib/supabase/server';
 import { getSessionUser } from '@/lib/auth/api';
-import { isSlotAvailable } from '@/lib/availability/calculator';
+import { isSlotAvailable, isSlotWithinBookableWindow } from '@/lib/availability/calculator';
 import {
   createCalendarClient,
   createCalendarEvent,
@@ -18,7 +18,8 @@ import {
   invalidateMonthlyCache,
 } from '@/lib/rate-limit';
 import { assignMember } from '@/lib/booking/assign-member';
-import type { Member } from '@/types';
+import type { Member, WeeklyAvailability, TimeRestrictionCustom } from '@/types';
+import { DEFAULT_AVAILABILITY } from '@/types';
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
@@ -90,11 +91,11 @@ const createBookingSchema = z.object({
   eventTypeId: z.string().uuid(),
   startAt: z.string().datetime(),
   endAt: z.string().datetime(),
-  name: z.string().min(1),
-  email: z.string().email(),
-  companyName: z.string().min(1, '会社名は必須です'),
-  phoneNumber: z.string().min(1, '電話番号は必須です'),
-  note: z.string().min(1, 'ご相談内容・備考は必須です'),
+  name: z.string().min(1).max(100),
+  email: z.string().email().max(254),
+  companyName: z.string().min(1, '会社名は必須です').max(200),
+  phoneNumber: z.string().min(1, '電話番号は必須です').max(50),
+  note: z.string().min(1, 'ご相談内容・備考は必須です').max(2000),
 });
 
 export async function POST(request: NextRequest) {
@@ -193,6 +194,60 @@ export async function POST(request: NextRequest) {
       start: new Date(validatedData.startAt),
       end: new Date(validatedData.endAt),
     };
+
+    // Server-side validation of the requested slot. The client availability list
+    // is not a trust boundary: this POST can be called directly with arbitrary
+    // times, so re-validate duration, notice period, working hours and the
+    // event type's time restriction here.
+    const durationMs = eventType.duration_minutes * 60 * 1000;
+    if (slot.end.getTime() - slot.start.getTime() !== durationMs) {
+      return NextResponse.json(
+        { error: '予約時間の長さが不正です。' },
+        { status: 400 }
+      );
+    }
+
+    // Resolve the event type's time restriction (same logic as availability API)
+    let timeRestriction: TimeRestrictionCustom | null = null;
+    if (
+      eventType.time_restriction_type === 'preset' &&
+      eventType.time_restriction_preset_id
+    ) {
+      const { data: preset } = await supabase
+        .from('time_slot_presets')
+        .select('days, start_time, end_time')
+        .eq('id', eventType.time_restriction_preset_id)
+        .single();
+      if (preset) {
+        timeRestriction = {
+          days: preset.days,
+          start_time: preset.start_time,
+          end_time: preset.end_time,
+        };
+      }
+    } else if (
+      eventType.time_restriction_type === 'custom' &&
+      eventType.time_restriction_custom
+    ) {
+      timeRestriction = eventType.time_restriction_custom as TimeRestrictionCustom;
+    }
+
+    const weeklyAvailability: WeeklyAvailability =
+      (eventType.organizer as Member | null)?.availability_settings ||
+      DEFAULT_AVAILABILITY;
+
+    if (
+      !isSlotWithinBookableWindow(slot, {
+        weeklyAvailability,
+        minBookingNoticeMinutes: eventType.min_notice_minutes ?? 60,
+        timeRestriction,
+      })
+    ) {
+      return NextResponse.json(
+        { error: '選択された日時は予約を受け付けていません。' },
+        { status: 400 }
+      );
+    }
 
     // Check each member individually so we know who is free
     const availableMembers: Member[] = [];
@@ -342,6 +397,7 @@ export async function POST(request: NextRequest) {
       .insert({
         event_type_id: validatedData.eventTypeId,
         google_event_id: googleEventId,
+        guest_event_id: guestEventId,
         start_at: validatedData.startAt,
         end_at: validatedData.endAt,
         requester_name: validatedData.name,

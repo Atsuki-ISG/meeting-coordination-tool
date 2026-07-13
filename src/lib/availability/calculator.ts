@@ -349,6 +349,50 @@ export function calculateAvailability(
 }
 
 /**
+ * Validate that a requested slot is bookable, independent of calendar busy state.
+ *
+ * The client-facing availability list is NOT a trust boundary: the public
+ * booking POST can be called directly with arbitrary start/end times. This
+ * re-checks, server-side, that the slot starts after the minimum booking notice
+ * and falls entirely within the member's working hours for that JST day,
+ * intersected with any event-type time restriction. Busy-time overlap is checked
+ * separately via isSlotAvailable.
+ */
+export function isSlotWithinBookableWindow(
+  slot: TimeSlot,
+  config: {
+    weeklyAvailability: WeeklyAvailability;
+    minBookingNoticeMinutes: number;
+    timeRestriction?: TimeRestrictionCustom | null;
+  }
+): boolean {
+  if (slot.end <= slot.start) return false;
+
+  const now = new Date();
+  const minBookingTime = addMinutes(now, config.minBookingNoticeMinutes);
+  if (slot.start < minBookingTime) return false;
+
+  const cfg: AvailabilityConfig = {
+    ...DEFAULT_CONFIG,
+    weeklyAvailability: config.weeklyAvailability,
+  };
+
+  const dayAnchor = startOfDayJST(slot.start);
+  const { start: workStart, end: workEnd, enabled } = getWorkingHours(dayAnchor, cfg);
+  if (!enabled) return false;
+
+  const restricted = applyTimeRestriction(
+    dayAnchor,
+    workStart,
+    workEnd,
+    config.timeRestriction ?? null
+  );
+  if (!restricted) return false;
+
+  return slot.start >= restricted.start && slot.end <= restricted.end;
+}
+
+/**
  * Check if a specific time slot is still available
  */
 export function isSlotAvailable(
