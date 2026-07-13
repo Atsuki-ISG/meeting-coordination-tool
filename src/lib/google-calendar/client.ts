@@ -89,34 +89,59 @@ export async function getFreeBusy(
   timeMin: Date,
   timeMax: Date
 ): Promise<BusySlot[]> {
-  // Use Events API to get all events including pending invitations
-  const response = await calendar.events.list({
-    calendarId,
-    timeMin: timeMin.toISOString(),
-    timeMax: timeMax.toISOString(),
-    singleEvents: true,
-    orderBy: 'startTime',
-  });
-
-  const events = response.data.items || [];
   const busySlots: BusySlot[] = [];
+  let pageToken: string | undefined = undefined;
 
-  for (const event of events) {
-    // Skip declined events and cancelled events
-    if (event.status === 'cancelled') continue;
+  // Use Events API to get all events including pending invitations.
+  // ページネーションで全件取得する（1ページ上限を超えると以降のイベントが無視され、
+  // 予定の多い人で「埋まっているのに空き」判定になるため）。
+  do {
+    const params: calendar_v3.Params$Resource$Events$List = {
+      calendarId,
+      timeMin: timeMin.toISOString(),
+      timeMax: timeMax.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 2500,
+      pageToken,
+    };
+    const response = await calendar.events.list(params);
 
-    // Check if the user has declined this event
-    const selfAttendee = event.attendees?.find(a => a.self);
-    if (selfAttendee?.responseStatus === 'declined') continue;
+    const events = response.data.items || [];
 
-    // Skip all-day events (they don't have dateTime)
-    if (!event.start?.dateTime || !event.end?.dateTime) continue;
+    for (const event of events) {
+      // Skip cancelled events
+      if (event.status === 'cancelled') continue;
 
-    busySlots.push({
-      start: new Date(event.start.dateTime),
-      end: new Date(event.end.dateTime),
-    });
-  }
+      // Skip events marked "free" (transparency=transparent). これを busy にすると
+      // 「予定あり」にしていない予定で枠が誤って消える。
+      if (event.transparency === 'transparent') continue;
+
+      // 勤務場所イベントは実際の予定ではないので無視
+      if ((event as { eventType?: string }).eventType === 'workingLocation') continue;
+
+      // Skip events the user has declined
+      const selfAttendee = event.attendees?.find((a) => a.self);
+      if (selfAttendee?.responseStatus === 'declined') continue;
+
+      if (event.start?.dateTime && event.end?.dateTime) {
+        // 時刻付きイベント
+        busySlots.push({
+          start: new Date(event.start.dateTime),
+          end: new Date(event.end.dateTime),
+        });
+      } else if (event.start?.date && event.end?.date) {
+        // 終日イベント（有給・出張など）。date は JST の日付、end.date は排他的（翌日）。
+        // 終日を busy にしないと休暇日にも予約が入ってしまう。
+        busySlots.push({
+          start: new Date(`${event.start.date}T00:00:00+09:00`),
+          end: new Date(`${event.end.date}T00:00:00+09:00`),
+        });
+      }
+    }
+
+    pageToken = response.data.nextPageToken ?? undefined;
+  } while (pageToken);
 
   return busySlots;
 }

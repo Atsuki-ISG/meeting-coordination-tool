@@ -5,10 +5,10 @@ import { sendDailyUsageReport } from '@/lib/notifications/usage-monitor';
 const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function GET(request: NextRequest) {
-  // Vercelからのcronリクエストを認証
+  // cron 呼び出しを認証（fail-close: CRON_SECRET 未設定なら全拒否）
   const authHeader = request.headers.get('authorization');
 
-  if (CRON_SECRET && authHeader !== `Bearer ${CRON_SECRET}`) {
+  if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

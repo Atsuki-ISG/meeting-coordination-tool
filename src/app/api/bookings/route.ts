@@ -357,11 +357,16 @@ export async function POST(request: NextRequest) {
     };
 
     const guestTitle = applyTemplate(eventType.guest_title_template || '{メニュー名}', '');
+    // ゲストが「誰と会うか」を見られるように、any_available では実際の担当者を招待する。
+    const guestFacingEmail =
+      eventType.participation_mode === 'any_available' && assignedMember
+        ? assignedMember.email
+        : organizer.email;
     const { eventId: guestEventId, meetLink } = await createCalendarEvent(calendar, {
       summary: guestTitle,
       start: slot.start,
       end: slot.end,
-      attendees: [validatedData.email, organizer.email],
+      attendees: [validatedData.email, guestFacingEmail],
       organizerEmail: organizer.email,
       addMeetLink: true,
     });
@@ -387,8 +392,10 @@ export async function POST(request: NextRequest) {
       ...noteTakerEmails.filter((e) => !attendingMembers.some((m) => m.email === e)),
     ];
 
-    const companyLine = `\n【会社名】\n${validatedData.companyName}`;
-    const phoneLine = `\n【電話番号】\n${validatedData.phoneNumber}`;
+    // ゲスト入力はカレンダー説明にそのまま入るため、山括弧を除去してリンク/タグ注入を防ぐ。
+    const sanitize = (s: string) => s.replace(/[<>]/g, '');
+    const companyLine = `\n【会社名】\n${sanitize(validatedData.companyName)}`;
+    const phoneLine = `\n【電話番号】\n${sanitize(validatedData.phoneNumber)}`;
     const meetLine = meetLink ? `\n\n【Google Meet】\n${meetLink}` : '';
 
     // Generate calendar title from template
@@ -396,7 +403,7 @@ export async function POST(request: NextRequest) {
 
     const { eventId: googleEventId } = await createCalendarEvent(calendar, {
       summary: calendarTitle,
-      description: `${validatedData.name} 様からのご予約${companyLine}${phoneLine}${meetLine}\n\n【ご相談内容・備考】\n${validatedData.note}`,
+      description: `${sanitize(validatedData.name)} 様からのご予約${companyLine}${phoneLine}${meetLine}\n\n【ご相談内容・備考】\n${sanitize(validatedData.note)}`,
       start: slot.start,
       end: slot.end,
       attendees: internalAttendees,
