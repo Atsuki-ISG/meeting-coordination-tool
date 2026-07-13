@@ -11,7 +11,7 @@ function getSecret(): Uint8Array {
 }
 
 // Routes that require authentication AND team membership AND active status
-const protectedRoutes = ['/dashboard', '/event-types', '/bookings', '/members', '/settings', '/invitations'];
+const protectedRoutes = ['/dashboard', '/event-types', '/bookings', '/members', '/settings'];
 
 // Routes that require authentication AND active status but NOT team membership
 const authOnlyRoutes = ['/team'];
