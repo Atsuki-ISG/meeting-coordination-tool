@@ -160,14 +160,14 @@ describe('assignMember', () => {
       expect(result?.id).toBe('m2');
     });
 
-    it('priority 行が存在しないメンバーは priority=0 として扱う', async () => {
+    it('priority 行が存在しないメンバーは最下位として扱う（強制追加された主催者対策）', async () => {
       const m1 = mkMember('m1');
       const m2 = mkMember('m2');
       const supabase = makeSupabase({
         event_type_members: {
           data: [
             { member_id: 'm1', priority: 5 },
-            // m2 の行はない
+            // m2 の行はない（例: event_type_members 未登録の主催者）
           ],
           error: null,
         },
@@ -177,8 +177,8 @@ describe('assignMember', () => {
         strategy: 'priority',
         availableMembers: [m1, m2],
       });
-      // m1=5, m2=0(default) → m2
-      expect(result?.id).toBe('m2');
+      // m1=5, m2=行なし(最下位) → m1。行の無いメンバーが最優先になってはいけない。
+      expect(result?.id).toBe('m1');
     });
 
     it('priority 同値の場合は id 昇順', async () => {

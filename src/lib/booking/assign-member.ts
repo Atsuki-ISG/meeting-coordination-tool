@@ -40,9 +40,12 @@ export async function assignMember(
       priorityMap.set(r.member_id, r.priority ?? 0);
     }
 
+    // event_type_members に行が無いメンバー（例: 強制的に候補入りした主催者）は
+    // priority 未設定なので「最下位」として扱う。0 を既定にすると最優先になってしまう。
+    const NO_PRIORITY = Number.MAX_SAFE_INTEGER;
     const sorted = [...availableMembers].sort((a, b) => {
-      const pa = priorityMap.get(a.id) ?? 0;
-      const pb = priorityMap.get(b.id) ?? 0;
+      const pa = priorityMap.get(a.id) ?? NO_PRIORITY;
+      const pb = priorityMap.get(b.id) ?? NO_PRIORITY;
       if (pa !== pb) return pa - pb;
       return a.id.localeCompare(b.id);
     });

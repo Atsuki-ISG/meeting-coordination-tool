@@ -7,6 +7,7 @@ import {
   createCalendarClient,
   createCalendarEvent,
   updateCalendarEvent,
+  deleteCalendarEvent,
   refreshAccessToken,
   getFreeBusy,
 } from '@/lib/google-calendar/client';
@@ -320,24 +321,40 @@ export async function POST(request: NextRequest) {
     const calendar = createCalendarClient(accessToken);
 
     // --- イベント1: ゲスト用（Meetリンク発行）---
-    const applyTemplate = (template: string, meetUrl: string) =>
-      template
-        .replace('{予約者名}', validatedData.name)
-        .replace('{メール}', validatedData.email)
-        .replace('{メニュー名}', eventType.title)
-        .replace('{会社名}', validatedData.companyName)
-        .replace('{日付}', slot.start.toLocaleDateString('ja-JP'))
-        .replace('{時刻}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
-        .replace('{備考}', validatedData.note.substring(0, 50))
-        .replace('{meet_link}', meetUrl)
+    // 日時は JST 固定で整形する（Cloud Run は UTC のため timeZone 指定が無いと9時間ズレる）
+    const dateStr = slot.start.toLocaleDateString('ja-JP', { timeZone: 'Asia/Tokyo' });
+    const timeStr = slot.start.toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Asia/Tokyo',
+    });
+    const noteExcerpt = validatedData.note.substring(0, 50);
+    // 全変数を1パスで置換する。逐次 .replace だと (1) 各変数の最初の1回しか置換されず、
+    // (2) ゲスト入力中の {メニュー名} 等が後段で再置換される問題があるため、正規表現で一括処理する。
+    const applyTemplate = (template: string, meetUrl: string) => {
+      const vars: Record<string, string> = {
+        '予約者名': validatedData.name,
+        'メール': validatedData.email,
+        'メニュー名': eventType.title,
+        '会社名': validatedData.companyName,
+        '日付': dateStr,
+        '時刻': timeStr,
+        '備考': noteExcerpt,
+        'meet_link': meetUrl,
         // Legacy English variables
-        .replace('{guest_name}', validatedData.name)
-        .replace('{guest_email}', validatedData.email)
-        .replace('{event_type}', eventType.title)
-        .replace('{company_name}', validatedData.companyName)
-        .replace('{date}', slot.start.toLocaleDateString('ja-JP'))
-        .replace('{time}', slot.start.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }))
-        .replace('{notes}', validatedData.note.substring(0, 50));
+        'guest_name': validatedData.name,
+        'guest_email': validatedData.email,
+        'event_type': eventType.title,
+        'company_name': validatedData.companyName,
+        'date': dateStr,
+        'time': timeStr,
+        'notes': noteExcerpt,
+      };
+      return template.replace(
+        /\{(予約者名|メール|メニュー名|会社名|日付|時刻|備考|meet_link|guest_name|guest_email|event_type|company_name|date|time|notes)\}/g,
+        (_, key) => vars[key] ?? ''
+      );
+    };
 
     const guestTitle = applyTemplate(eventType.guest_title_template || '{メニュー名}', '');
     const { eventId: guestEventId, meetLink } = await createCalendarEvent(calendar, {
@@ -414,7 +431,23 @@ export async function POST(request: NextRequest) {
 
     if (bookingError) {
       console.error('Failed to create booking record:', bookingError);
-      // TODO: Consider rolling back the calendar event
+      // 予約レコードを作れなかった場合、既に作成済みのカレンダーイベント2件を
+      // ロールバックしてゲスト・主催者のカレンダーに孤児イベントを残さない。
+      for (const eid of [guestEventId, googleEventId]) {
+        if (!eid) continue;
+        try {
+          await deleteCalendarEvent(calendar, eid);
+        } catch (rollbackErr) {
+          console.error(`Failed to roll back calendar event ${eid}:`, rollbackErr);
+        }
+      }
+      // 23P01 = exclusion_violation（ダブルブッキング防止のDB制約に抵触）
+      if ((bookingError as { code?: string }).code === '23P01') {
+        return NextResponse.json(
+          { error: 'この時間帯はすでに予約が入りました。別の時間をお選びください。' },
+          { status: 409 }
+        );
+      }
       return NextResponse.json(
         { error: 'Failed to create booking' },
         { status: 500 }
